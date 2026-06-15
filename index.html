@@ -1,0 +1,2673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全自动化养鸡监测平台 v2.0</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f0f2f5; --card: #fff; --text: #1a1a2e; --text2: #555;
+  --primary: #2d6a4f; --primary2: #40916c; --accent: #e76f51;
+  --warn: #f4a261; --danger: #e63946; --success: #2a9d8f;
+  --border: #dee2e6; --shadow: 0 2px 8px rgba(0,0,0,.08);
+  --radius: 10px; --transition: .25s;
+}
+[data-theme="dark"] {
+  --bg: #1a1a2e; --card: #16213e; --text: #e0e0e0; --text2: #aaa;
+  --border: #2a2a4a; --shadow: 0 2px 12px rgba(0,0,0,.3);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+/* ===== HEADER ===== */
+.header { background:linear-gradient(135deg, #1b4332, #2d6a4f); color:#fff; padding:12px 20px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,.15); }
+.header h1 { font-size:1.3em; display:flex; align-items:center; gap:8px; }
+.header h1 i { font-size:1.5em; }
+.metrics { display:flex; flex-wrap:wrap; gap:10px; }
+.metric { background:rgba(255,255,255,.15); padding:6px 14px; border-radius:20px; font-size:.85em; white-space:nowrap; display:flex; align-items:center; gap:6px; }
+.metric i { font-size:.9em; }
+.metric .val { font-weight:700; margin:0 2px; }
+.theme-btn { background:rgba(255,255,255,.2); border:none; color:#fff; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1.1em; transition:var(--transition); }
+.theme-btn:hover { background:rgba(255,255,255,.35); }
+/* ===== TABS ===== */
+.tab-nav { display:flex; flex-wrap:wrap; background:var(--card); border-bottom:2px solid var(--border); position:sticky; top:72px; z-index:99; padding:0 10px; overflow-x:auto; }
+.tab-btn { padding:12px 18px; border:none; background:none; cursor:pointer; font-size:.9em; color:var(--text2); border-bottom:3px solid transparent; transition:var(--transition); white-space:nowrap; display:flex; align-items:center; gap:6px; font-family:inherit; }
+.tab-btn:hover { color:var(--primary); }
+.tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:700; }
+.tab-panel { display:none; padding:16px; max-width:1400px; margin:0 auto; }
+.tab-panel.active { display:block; }
+/* ===== CARDS ===== */
+.card { background:var(--card); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); margin-bottom:16px; border:1px solid var(--border); }
+.card h3 { margin-bottom:12px; display:flex; align-items:center; gap:8px; font-size:1.05em; color:var(--primary); }
+.card h3 i { width:20px; text-align:center; }
+.grid2 { display:grid; grid-template-columns:repeat(auto-fit, minmax(360px,1fr)); gap:16px; }
+.grid3 { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:16px; }
+/* ===== TABLES ===== */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:.88em; }
+th, td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); }
+th { background:var(--bg); font-weight:600; white-space:nowrap; position:sticky; top:0; }
+tr:hover { background:rgba(45,106,79,.04); }
+/* ===== BUTTONS ===== */
+.btn { padding:7px 16px; border:none; border-radius:6px; cursor:pointer; font-size:.88em; transition:var(--transition); display:inline-flex; align-items:center; gap:5px; font-family:inherit; }
+.btn-sm { padding:4px 10px; font-size:.8em; }
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { background:var(--primary2); }
+.btn-success { background:var(--success); color:#fff; }
+.btn-success:hover { opacity:.85; }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn-danger:hover { opacity:.85; }
+.btn-warn { background:var(--warn); color:#fff; }
+.btn-outline { background:none; border:1px solid var(--border); color:var(--text); }
+.btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+/* ===== FORMS ===== */
+.form-group { margin-bottom:12px; }
+.form-group label { display:block; font-weight:600; margin-bottom:4px; font-size:.88em; }
+.form-group input, .form-group select, .form-group textarea { width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:.9em; background:var(--card); color:var(--text); font-family:inherit; }
+.form-row { display:flex; gap:12px; flex-wrap:wrap; }
+.form-row .form-group { flex:1; min-width:140px; }
+/* ===== TOGGLE ===== */
+.toggle-wrap { display:flex; align-items:center; gap:8px; }
+.toggle { position:relative; width:48px; height:26px; display:inline-block; }
+.toggle input { opacity:0; width:0; height:0; }
+.toggle .slider { position:absolute; inset:0; background:#ccc; border-radius:26px; cursor:pointer; transition:var(--transition); }
+.toggle .slider::before { content:''; position:absolute; height:20px; width:20px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:var(--transition); }
+.toggle input:checked + .slider { background:var(--success); }
+.toggle input:checked + .slider::before { transform:translateX(22px); }
+/* ===== ALERTS ===== */
+.alert { padding:10px 14px; border-radius:6px; margin:8px 0; font-size:.88em; display:flex; align-items:center; gap:8px; }
+.alert-danger { background:#fde8e8; color:#9b1c1c; border:1px solid #f5b5b5; }
+.alert-warn { background:#fef3c7; color:#92400e; border:1px solid #fcd34d; }
+.alert-info { background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; }
+.alert-success { background:#d1fae5; color:#065f46; border:1px solid #6ee7b7; }
+/* ===== MODALS ===== */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:200; justify-content:center; align-items:center; padding:20px; }
+.modal-overlay.show { display:flex; }
+.modal { background:var(--card); border-radius:var(--radius); padding:24px; max-width:640px; width:100%; max-height:85vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,.2); }
+.modal h3 { margin-bottom:16px; }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
+/* ===== BADGES ===== */
+.badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:.75em; font-weight:600; }
+.badge-success { background:#d1fae5; color:#065f46; }
+.badge-warn { background:#fef3c7; color:#92400e; }
+.badge-danger { background:#fde8e8; color:#9b1c1c; }
+.badge-info { background:#dbeafe; color:#1e40af; }
+/* ===== COUNTDOWN ===== */
+.countdown { font-family:'Courier New',monospace; font-weight:700; color:var(--primary); }
+/* ===== CHICKEN DETAIL ===== */
+.detail-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:16px; }
+.vaccine-list { max-height:200px; overflow-y:auto; }
+/* ===== RESPONSIVE ===== */
+@media (max-width:768px) {
+  .header { padding:8px 12px; }
+  .header h1 { font-size:1.1em; }
+  .metrics { gap:4px; }
+  .metric { padding:4px 10px; font-size:.75em; }
+  .tab-btn { padding:10px 12px; font-size:.8em; }
+  .tab-panel { padding:10px; }
+  .grid2, .grid3 { grid-template-columns:1fr; }
+  .modal { padding:16px; max-width:100%; }
+  .form-row { flex-direction:column; }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:#bbb; border-radius:3px; }
+
+/* Animation */
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+.pulse { animation:pulse 1.5s infinite; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+.fade-in { animation:fadeIn .3s ease; }
+
+/* Highlight for sell-ready */
+.sell-ready { background:#fff3cd !important; }
+.sell-ready td:first-child::before { content:'💰 '; }
+
+.quick-stats { display:flex; flex-wrap:wrap; gap:10px; }
+.quick-stat { flex:1; min-width:120px; background:var(--bg); padding:10px; border-radius:8px; text-align:center; }
+.quick-stat .num { font-size:1.4em; font-weight:700; color:var(--primary); }
+.quick-stat .label { font-size:.78em; color:var(--text2); }
+</style>
+</head>
+<body>
+<!-- ===== HEADER ===== -->
+<header class="header">
+  <h1><i class="fas fa-kiwi-bird"></i>全自动养鸡监测平台</h1>
+  <div class="metrics">
+    <div class="metric"><i class="fas fa-feather-alt"></i>存栏:<span class="val" id="hdr-total">0</span>只</div>
+    <div class="metric"><i class="fas fa-egg"></i>今日产蛋:<span class="val" id="hdr-eggs">0</span>枚</div>
+    <div class="metric"><i class="fas fa-box"></i>饲料:<span class="val" id="hdr-feed">0</span>kg</div>
+    <div class="metric"><i class="fas fa-tint"></i>水:<span class="val" id="hdr-water">0</span>L</div>
+    <div class="metric"><i class="fas fa-coins"></i>资金:<span class="val" id="hdr-money">0</span>元</div>
+  </div>
+  <button class="theme-btn" onclick="App.toggleTheme()" title="切换主题"><i class="fas fa-moon"></i></button>
+</header>
+
+<!-- ===== TAB NAV ===== -->
+<nav class="tab-nav" id="tab-nav">
+  <button class="tab-btn active" data-tab="tab-chickens"><i class="fas fa-list"></i>鸡群管理</button>
+  <button class="tab-btn" data-tab="tab-market"><i class="fas fa-chart-line"></i>行情交易</button>
+  <button class="tab-btn" data-tab="tab-stats"><i class="fas fa-chart-bar"></i>统计报表</button>
+  <button class="tab-btn" data-tab="tab-weather"><i class="fas fa-cloud-sun"></i>天气预报</button>
+  <button class="tab-btn" data-tab="tab-sensors"><i class="fas fa-thermometer-half"></i>大棚监测</button>
+  <button class="tab-btn" data-tab="tab-auto"><i class="fas fa-cogs"></i>自动化</button>
+</nav>
+
+<!-- ===== TAB 1: 鸡群管理 ===== -->
+<div class="tab-panel active" id="tab-chickens">
+  <div class="grid2">
+    <div class="card">
+      <h3><i class="fas fa-plus-circle"></i>快速操作</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <button class="btn btn-primary" onclick="App.showModal('modal-add-chicken')"><i class="fas fa-plus"></i>引入新鸡</button>
+        <button class="btn btn-success" onclick="App.showModal('modal-batch-buy')"><i class="fas fa-shopping-cart"></i>批量购入鸡苗</button>
+        <button class="btn btn-warn" onclick="App.sellReadyChickens()"><i class="fas fa-dollar-sign"></i>批量卖出达标鸡</button>
+        <button class="btn btn-outline" onclick="App.showModal('modal-add-vaccine-batch')"><i class="fas fa-syringe"></i>批量免疫</button>
+            <button class="btn btn-outline" onclick="App.showModal('modal-sell-eggs')"><i class="fas fa-egg"></i>出售鸡蛋</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3><i class="fas fa-lightbulb"></i>阶段管理建议</h3>
+      <div id="stage-advice">加载中...</div>
+    </div>
+  </div>
+  <!-- 饲料与水管理 — 鸡只列表上方 -->
+  <div class="card">
+    <h3><i class="fas fa-utensils"></i>饲料与水管理 <button class="btn btn-sm btn-outline" onclick="App.clearFeedWater()" style="margin-left:8px;" title="重置库存到默认值"><i class="fas fa-undo"></i>重置库存</button></h3>
+    <div class="grid3">
+      <div class="quick-stat"><div class="num" id="feed-stock">0</div><div class="label">饲料库存 (kg)</div></div>
+      <div class="quick-stat"><div class="num" id="water-stock">0</div><div class="label">水库存 (L)</div></div>
+      <div class="quick-stat"><div class="num" id="feed-rate">0</div><div class="label">预估日消耗 (kg)</div></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+      <button class="btn btn-primary btn-sm" onclick="App.addFeed()"><i class="fas fa-plus"></i>补充饲料 100kg</button>
+      <button class="btn btn-primary btn-sm" onclick="App.addWater()"><i class="fas fa-plus"></i>补充水 200L</button>
+      <button class="btn btn-outline btn-sm" onclick="App.showModal('modal-feed-settings')"><i class="fas fa-cog"></i>喂食设置</button>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+        <span>自动喂食:</span>
+        <label class="toggle"><input type="checkbox" id="toggle-auto-feed" onchange="App.toggleAuto('feed')"><span class="slider"></span></label>
+      </span>
+    </div>
+  </div>
+  <div class="card">
+    <h3><i class="fas fa-kiwi-bird"></i>鸡只列表 <span style="font-weight:400;font-size:.85em;color:var(--text2);">(点击行查看详情)</span></h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <select id="filter-breed" onchange="App.filterChickens()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);">
+        <option value="all">全部品种</option>
+      </select>
+      <select id="filter-status" onchange="App.filterChickens()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);">
+        <option value="all">全部状态</option>
+        <option value="alive">存活</option>
+        <option value="sold">已售</option>
+        <option value="dead">已死亡</option>
+        <option value="sell-ready">待出栏</option>
+      </select>
+      <input type="text" id="filter-search" placeholder="搜索编号..." oninput="App.filterChickens()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);min-width:160px;">
+      <span style="margin-left:auto;display:flex;gap:6px;align-items:center;">
+        <span style="font-size:.82em;color:var(--text2);">已选 <strong id="selected-count">0</strong> 只</span>
+        <button class="btn btn-sm btn-danger" onclick="App.clearAllChickens()" title="清除全部鸡只库存"><i class="fas fa-trash-alt"></i>清空鸡舍</button>
+        <button class="btn btn-sm btn-warn" onclick="App.batchSellSelected()"><i class="fas fa-dollar-sign"></i>批量卖出</button>
+        <button class="btn btn-sm btn-danger" onclick="App.batchKillSelected()"><i class="fas fa-skull-crossbones"></i>记录死亡</button>
+        <button class="btn btn-sm btn-outline" onclick="App.batchVaccinateSelected()"><i class="fas fa-syringe"></i>批量免疫</button>
+      </span>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th style="width:36px;"><input type="checkbox" id="select-all-chickens" onclick="App.toggleSelectAll()" title="全选/取消全选"></th>
+        <th>编号</th><th>品种</th><th>日龄</th><th>体重(kg)</th><th>状态</th><th>产蛋/总</th><th>疫苗</th><th>预计出栏</th><th>操作</th>
+      </tr></thead><tbody id="chicken-table-body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 2: 行情交易 ===== -->
+<div class="tab-panel" id="tab-market">
+  <div class="card">
+    <h3><i class="fas fa-chart-line"></i>中国大陆实时行情
+      <button class="btn btn-sm btn-primary" onclick="App.refreshMarket()" style="margin-left:12px;"><i class="fas fa-sync-alt"></i>刷新行情</button>
+              <button class="btn btn-sm btn-outline" onclick="App.showModal('modal-price-alert')" style="margin-left:6px;"><i class="fas fa-bell"></i>价格预警</button><button class="btn btn-sm btn-outline" onclick="App.showModal('modal-api-settings')" style="margin-left:6px;"><i class="fas fa-plug"></i>API设置</button>
+      <span style="font-size:.75em;color:var(--text2);margin-left:8px;" id="market-update-time"></span>
+    </h3>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>品种</th><th>类别</th><th>买入价</th><th>卖出价(毛鸡)</th><th>鸡蛋价(元/kg)</th><th>鸡苗价</th><th>趋势</th>
+      </tr></thead><tbody id="market-table-body"></tbody></table>
+    </div>
+    <div style="margin-top:12px;padding:10px;background:var(--bg);border-radius:6px;font-size:.82em;color:var(--text2);">
+      <strong>数据说明：</strong>行情数据模拟农业农村部每周监测均价（白羽肉鸡、鸡蛋主要参考山东、河南、河北主产区）。预留真实 API 接入接口，可在设置中替换 API Key。<br>
+      <strong>API 接入指引：</strong>聚合数据(juhe.cn) — 农产品价格；和风天气(devapi.qweather.com) — 天气；也可自行对接农业农村部(nync.gov.cn)数据。
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3><i class="fas fa-shopping-cart"></i>买入鸡苗</h3>
+      <div class="form-row">
+        <div class="form-group"><label>品种</label><select id="buy-breed"></select></div>
+        <div class="form-group"><label>数量 (只)</label><input type="number" id="buy-count" value="100" min="1"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>单价 (元/只)</label><input type="number" id="buy-price" value="3.5" step="0.01"></div>
+        <div class="form-group"><label>引入日龄</label><input type="number" id="buy-age" value="1" min="1"></div>
+      </div>
+      <button class="btn btn-success" onclick="App.buyChicks()"><i class="fas fa-check"></i>确认买入</button>
+    </div>
+    <div class="card">
+      <h3><i class="fas fa-dollar-sign"></i>批量卖出</h3>
+      <div id="sell-list"></div>
+      <button class="btn btn-warn" onclick="App.sellReadyChickens()"><i class="fas fa-coins"></i>卖出所有达标鸡</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: 统计报表 ===== -->
+<div class="tab-panel" id="tab-stats">
+  <div class="grid2">
+    <div class="card">
+      <h3><i class="fas fa-egg"></i>产蛋趋势 (近30天)</h3>
+      <canvas id="chart-eggs" height="220"></canvas>
+    </div>
+    <div class="card">
+      <h3><i class="fas fa-skull-crossbones"></i>死亡统计</h3>
+      <div class="quick-stats">
+        <div class="quick-stat"><div class="num" id="stat-week-death">0</div><div class="label">本周死亡</div></div>
+        <div class="quick-stat"><div class="num" id="stat-month-death">0</div><div class="label">本月死亡</div></div>
+        <div class="quick-stat"><div class="num" id="stat-total-death">0</div><div class="label">累计死亡</div></div>
+        <div class="quick-stat"><div class="num" id="stat-death-rate">0%</div><div class="label">周死亡率</div></div>
+      </div>
+      <button class="btn btn-danger btn-sm" style="margin-top:8px;" onclick="App.showModal('modal-record-death')"><i class="fas fa-plus"></i>记录死亡</button>
+      <div class="table-wrap" style="margin-top:8px;"><table><thead><tr><th>日期</th><th>编号</th><th>原因</th><th>体重</th></tr></thead><tbody id="death-table-body"></tbody></table></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3><i class="fas fa-chart-pie"></i>品种存栏分布</h3>
+    <canvas id="chart-breed-dist" height="200"></canvas>
+  </div>
+  <div class="card">
+    <h3><i class="fas fa-history"></i>鸡蛋销售记录</h3>
+    <div class="table-wrap"><table><thead><tr><th>日期</th><th>数量(枚)</th><th>单价(元/kg)</th><th>总价(元)</th></tr></thead><tbody id="egg-sales-body"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ===== TAB 4: 天气预报 ===== -->
+<div class="tab-panel" id="tab-weather">
+  <div class="grid2">
+    <div class="card">
+      <h3><i class="fas fa-search-location"></i>城市选择</h3>
+      <div class="form-row">
+        <div class="form-group"><label>省份</label><select id="weather-province" onchange="App.updateCities()"><option value="">请选择</option></select></div>
+        <div class="form-group"><label>城市</label><select id="weather-city" onchange="App.updateWeather()"><option value="">请选择</option></select></div>
+      </div>
+      <div class="form-group"><label>或直接搜索城市</label><input type="text" id="weather-search" placeholder="输入城市名搜索..." oninput="App.searchCities()"><div id="city-search-results" style="max-height:150px;overflow-y:auto;"></div></div>
+    </div>
+    <div class="card" id="weather-current-card">
+      <h3><i class="fas fa-cloud-sun"></i>当前天气 <span id="weather-city-name"></span></h3>
+      <div id="weather-current"><p style="color:var(--text2)">请选择城市查看天气</p></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3><i class="fas fa-calendar-alt"></i>未来3天预报</h3>
+    <div class="grid3" id="weather-forecast"></div>
+  </div>
+  <div class="card" id="weather-advice-card" style="display:none;">
+    <h3><i class="fas fa-clipboard-check"></i>养殖气象建议</h3>
+    <div id="weather-advice"></div>
+  </div>
+</div>
+
+<!-- ===== TAB 5: 大棚监测 ===== -->
+<div class="tab-panel" id="tab-sensors">
+  <div style="margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+    <button class="btn btn-primary" onclick="App.addGreenhouse()"><i class="fas fa-plus"></i> 添加大棚</button>
+    <span style="font-size:.82em;color:var(--text2);">共 <strong id="gh-count">0</strong> 个大棚</span>
+  </div>
+  <div id="greenhouse-cards" class="grid2"></div>
+  <div class="card" id="sensor-chart-card">
+    <h3><i class="fas fa-chart-area"></i>温湿度历史曲线 (近24小时)
+      <select id="chart-gh-select" onchange="App.updateSensorChart()" style="margin-left:8px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);"></select>
+    </h3>
+    <canvas id="chart-sensor" height="220"></canvas>
+  </div>
+</div>
+
+<!-- ===== TAB 6: 自动化 ===== -->
+<div class="tab-panel" id="tab-auto">
+  <div class="card">
+    <h3><i class="fas fa-cogs"></i>自动化任务总览</h3>
+    <div class="table-wrap"><table><thead><tr>
+      <th>任务</th><th>状态</th><th>间隔</th><th>下次执行</th><th>操作</th>
+    </tr></thead><tbody id="auto-tasks-body"></tbody></table></div>
+  </div>
+  <div class="card">
+    <h3><i class="fas fa-bell"></i>告警记录 <button class="btn btn-sm btn-outline" onclick="App.clearRecords('alerts')" style="margin-left:8px;"><i class="fas fa-eraser"></i>清空告警</button></h3>
+    <div id="alert-log" style="max-height:200px;overflow-y:auto;"></div>
+  </div>
+  <div class="card">
+    <h3><i class="fas fa-database"></i>数据管理</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      <button class="btn btn-sm btn-outline" onclick="App.clearRecords('deaths')"><i class="fas fa-skull-crossbones"></i>清空死亡记录</button>
+      <button class="btn btn-sm btn-outline" onclick="App.clearRecords('eggSales')"><i class="fas fa-egg"></i>清空鸡蛋销售记录</button>
+      <button class="btn btn-sm btn-outline" onclick="App.clearRecords('sensor')"><i class="fas fa-thermometer-half"></i>清空传感器历史</button>
+      <button class="btn btn-sm btn-outline" onclick="App.clearRecords('marketCache')"><i class="fas fa-chart-line"></i>清空行情缓存</button>
+      <button class="btn btn-sm btn-outline" onclick="App.clearRecords('weatherCache')"><i class="fas fa-cloud-sun"></i>清空天气缓存</button>
+      <button class="btn btn-sm btn-danger" onclick="App.clearRecords('all')"><i class="fas fa-trash-alt"></i>重置全部数据</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODALS ===== -->
+<!-- 添加新鸡 -->
+<div class="modal-overlay" id="modal-add-chicken">
+  <div class="modal"><h3><i class="fas fa-plus-circle"></i>引入新鸡</h3>
+    <div class="form-row"><div class="form-group"><label>品种</label><select id="add-breed"></select></div><div class="form-group"><label>引入日龄 (天)</label><input type="number" id="add-age" value="1" min="1"></div></div>
+    <div class="form-row"><div class="form-group"><label>初始体重 (kg)</label><input type="number" id="add-weight" value="0.04" step="0.001"></div><div class="form-group"><label>数量 (只，批量引入)</label><input type="number" id="add-count" value="1" min="1" max="5000"></div></div>
+    <div class="form-group"><label>备注</label><input type="text" id="add-note" placeholder="批次、来源等"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="App.hideModal('modal-add-chicken')">取消</button>
+      <button class="btn btn-primary" onclick="App.addChicken()">确认添加</button>
+    </div>
+  </div>
+</div>
+<!-- 批量购入鸡苗 -->
+<div class="modal-overlay" id="modal-batch-buy">
+  <div class="modal"><h3><i class="fas fa-shopping-cart"></i>批量购入鸡苗</h3>
+    <div class="form-row"><div class="form-group"><label>品种</label><select id="batch-buy-breed"></select></div><div class="form-group"><label>数量</label><input type="number" id="batch-buy-count" value="500" min="1"></div></div>
+    <div class="form-row"><div class="form-group"><label>单价 (元/只)</label><input type="number" id="batch-buy-price" value="3.5" step="0.01"></div><div class="form-group"><label>日龄</label><input type="number" id="batch-buy-age" value="1"></div></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="App.hideModal('modal-batch-buy')">取消</button>
+      <button class="btn btn-success" onclick="App.batchBuyChicks()">确认购入</button>
+    </div>
+  </div>
+</div>
+<!-- 疫苗记录 -->
+<div class="modal-overlay" id="modal-add-vaccine-batch">
+  <div class="modal"><h3><i class="fas fa-syringe"></i>批量免疫记录</h3>
+    <div class="form-row"><div class="form-group"><label>目标鸡群</label><select id="vaccine-target"><option value="all">全部存活鸡</option><option value="range">按日龄范围</option></select></div><div class="form-group"><label>日龄范围 (如 7-10)</label><input type="text" id="vaccine-age-range" placeholder="7-10" disabled></div></div>
+    <div class="form-row"><div class="form-group"><label>疫苗名称</label><select id="vaccine-name"><option value="马立克疫苗">马立克疫苗</option><option value="新城疫疫苗">新城疫疫苗 (ND)</option><option value="传支疫苗">传支疫苗 (IB)</option><option value="禽流感H5+H7疫苗">禽流感 H5+H7</option><option value="法氏囊疫苗">法氏囊疫苗 (IBD)</option><option value="鸡痘疫苗">鸡痘疫苗</option><option value="禽流感H9疫苗">禽流感 H9</option><option value="支原体疫苗">支原体疫苗</option><option value="传喉疫苗">传喉疫苗 (ILT)</option><option value="减蛋综合征疫苗">减蛋综合征 (EDS)</option><option value="禽脑脊髓炎疫苗">禽脑脊髓炎 (AE)</option></select></div><div class="form-group"><label>接种日期</label><input type="date" id="vaccine-date"></div></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="App.hideModal('modal-add-vaccine-batch')">取消</button>
+      <button class="btn btn-primary" onclick="App.addBatchVaccine()">确认记录</button>
+    </div>
+  </div>
+</div>
+<!-- 记录死亡 -->
+<div class="modal-overlay" id="modal-record-death">
+  <div class="modal"><h3><i class="fas fa-skull-crossbones"></i>记录鸡只死亡</h3>
+    <div class="form-row"><div class="form-group"><label>鸡只编号</label><select id="death-chicken-id"></select></div><div class="form-group"><label>死亡日期</label><input type="date" id="death-date"></div></div>
+    <div class="form-row"><div class="form-group"><label>死亡原因</label><select id="death-reason"><option value="疾病">疾病</option><option value="啄肛">啄肛</option><option value="猝死">猝死</option><option value="热应激">热应激</option><option value="营养不良">营养不良</option><option value="意外">意外</option><option value="其他">其他</option></select></div><div class="form-group"><label>死亡时体重 (kg)</label><input type="number" id="death-weight" step="0.01"></div></div>
+    <div class="form-group"><label>备注</label><textarea id="death-note" rows="2"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="App.hideModal('modal-record-death')">取消</button>
+      <button class="btn btn-danger" onclick="App.recordDeath()">确认记录</button>
+    </div>
+  </div>
+</div>
+<!-- 鸡只详情 -->
+<div class="modal-overlay" id="modal-chicken-detail">
+  <div class="modal" style="max-width:800px;"><h3><i class="fas fa-kiwi-bird"></i>鸡只详情 — <span id="detail-id"></span></h3>
+    <div class="detail-grid">
+      <div><strong>品种：</strong><span id="detail-breed"></span></div>
+      <div><strong>日龄：</strong><span id="detail-age"></span> 天</div>
+      <div><strong>体重：</strong><span id="detail-weight"></span> kg</div>
+      <div><strong>状态：</strong><span id="detail-status"></span></div>
+      <div><strong>引入日期：</strong><span id="detail-intro-date"></span></div>
+      <div><strong>预计出栏：</strong><span id="detail-sell-date"></span></div>
+      <div><strong>累计产蛋：</strong><span id="detail-total-eggs"></span> 枚</div>
+      <div><strong>日均产蛋率：</strong><span id="detail-egg-rate"></span></div>
+      <div><strong>采食量：</strong><span id="detail-feed-intake"></span> g/天</div>
+    </div>
+    <h4 style="margin-top:16px;">疫苗记录 <button class="btn btn-sm btn-outline" onclick="App.addVaccineForChicken()"><i class="fas fa-plus"></i>添加</button></h4>
+    <div class="vaccine-list"><table><thead><tr><th>疫苗名称</th><th>接种日期</th><th>下次应免</th><th>操作</th></tr></thead><tbody id="detail-vaccines"></tbody></table></div>
+    <h4 style="margin-top:16px;">产蛋记录 (近7天)</h4>
+    <div class="table-wrap"><table><thead><tr><th>日期</th><th>产蛋数</th></tr></thead><tbody id="detail-egg-records"></tbody></table></div>
+    <canvas id="chart-chicken-weight" height="180" style="margin-top:12px;"></canvas>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="App.hideModal('modal-chicken-detail')">关闭</button>
+      <button class="btn btn-danger btn-sm" onclick="App.deleteChicken()"><i class="fas fa-trash"></i>删除记录</button>
+    </div>
+  </div>
+</div>
+<!-- 喂食设置 -->
+<div class="modal-overlay" id="modal-feed-settings">
+  <div class="modal"><h3><i class="fas fa-cog"></i>自动喂食设置</h3>
+    <div class="form-row">
+      <div class="form-group"><label>喂食间隔 (分钟)</label><input type="number" id="feed-interval" value="60" min="10" max="480"></div>
+      <div class="form-group"><label>每次喂食量 (g/只)</label><input type="number" id="feed-amount" value="15" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>喂水间隔 (分钟)</label><input type="number" id="water-interval" value="30" min="5" max="240"></div>
+      <div class="form-group"><label>每次饮水量 (ml/只)</label><input type="number" id="water-amount" value="30" min="1"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="App.hideModal('modal-feed-settings')">取消</button>
+      <button class="btn btn-primary" onclick="App.saveFeedSettings()">保存</button>
+    </div>
+  </div>
+</div>
+<!-- 卖鸡蛋 -->
+<div class="modal-overlay" id="modal-sell-eggs">
+  <div class="modal"><h3><i class="fas fa-egg"></i>出售鸡蛋</h3>
+    <p>当前库存: <strong id="sell-eggs-stock">0</strong> 枚</p>
+    <p>当前鸡蛋行情: <strong id="sell-eggs-price">0</strong> 元/kg (约 <span id="sell-eggs-per-piece">0</span> 元/枚)</p>
+    <div class="form-row">
+      <div class="form-group"><label>出售数量 (枚)</label><input type="number" id="sell-eggs-count" value="0" min="1"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="App.hideModal('modal-sell-eggs')">取消</button>
+      <button class="btn btn-success" onclick="App.sellEggs()">确认出售</button>
+    </div>
+  </div>
+</div>
+<!-- 行情预警设置 -->
+<div class="modal-overlay" id="modal-price-alert">
+  <div class="modal"><h3><i class="fas fa-bell"></i>行情预警设置</h3>
+    <div class="form-row">
+      <div class="form-group"><label>毛鸡价格下跌预警 (%)</label><input type="number" id="price-drop-threshold" value="5" min="1" max="50"></div>
+      <div class="form-group"><label>鸡蛋价格上涨预警 (%)</label><input type="number" id="price-rise-threshold" value="10" min="1" max="50"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="App.hideModal('modal-price-alert')">取消</button>
+      <button class="btn btn-primary" onclick="App.savePriceAlertSettings()">保存</button>
+    </div>
+  </div>
+</div>
+<!-- API 设置 -->
+<div class="modal-overlay" id="modal-api-settings">
+  <div class="modal"><h3><i class="fas fa-plug"></i>API 接口设置</h3>
+    <div class="form-group"><label>和风天气 API Key</label><input type="text" id="api-qweather-key" placeholder="devapi.qweather.com 注册获取免费KEY"></div>
+    <div class="form-group"><label>聚合数据 API Key (行情)</label><input type="text" id="api-juhe-key" placeholder="juhe.cn 注册获取"></div>
+    <div class="form-group"><label>自定义行情 API URL</label><input type="text" id="api-market-url" placeholder="https://your-api.com/poultry-prices"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="App.hideModal('modal-api-settings')">取消</button>
+      <button class="btn btn-primary" onclick="App.saveAPISettings()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script>
+/* ================================================================
+   全自动化养鸡监测平台 — 完整 JavaScript 引擎
+   ================================================================ */
+
+// ==================== 品种数据库 ====================
+const BREEDS = {
+  'white-broiler': {
+    name:'白羽肉鸡 (AA+)', type:'meat', category:'白羽肉鸡',
+    maturityDays:42, adultWeight:2.5, targetWeight:2.5,
+    chickPrice:3.5,毛鸡Price:9.2, eggPrice:0,
+    dailyFeedG:110, dailyWaterML:220,
+    desc:'快大型白羽肉鸡，42天出栏，料肉比1.6:1',
+    stages:{brooding:[0,14],growing:[15,28],finishing:[29,42]},
+    eggStartDay:0, eggPeakRate:0
+  },
+  'yellow-fast': {
+    name:'黄羽肉鸡 (快大型)', type:'meat', category:'黄羽肉鸡',
+    maturityDays:60, adultWeight:2.0, targetWeight:2.0,
+    chickPrice:3.8,毛鸡Price:14.0, eggPrice:0,
+    dailyFeedG:90, dailyWaterML:180,
+    desc:'快大型黄羽肉鸡，60天出栏',
+    stages:{brooding:[0,14],growing:[15,42],finishing:[43,60]},
+    eggStartDay:0, eggPeakRate:0
+  },
+  'yellow-mid': {
+    name:'黄羽肉鸡 (中速型)', type:'meat', category:'黄羽肉鸡',
+    maturityDays:90, adultWeight:1.8, targetWeight:1.8,
+    chickPrice:4.5,毛鸡Price:16.0, eggPrice:0,
+    dailyFeedG:80, dailyWaterML:160,
+    desc:'中速型黄羽肉鸡，90天出栏',
+    stages:{brooding:[0,14],growing:[15,56],finishing:[57,90]},
+    eggStartDay:0, eggPeakRate:0
+  },
+  'yellow-slow': {
+    name:'黄羽肉鸡 (慢速型)', type:'meat', category:'黄羽肉鸡',
+    maturityDays:120, adultWeight:1.6, targetWeight:1.6,
+    chickPrice:5.5,毛鸡Price:22.0, eggPrice:0,
+    dailyFeedG:70, dailyWaterML:140,
+    desc:'慢速型优质黄羽肉鸡，120天出栏',
+    stages:{brooding:[0,21],growing:[22,70],finishing:[71,120]},
+    eggStartDay:0, eggPeakRate:0
+  },
+  'hyline-brown': {
+    name:'海兰褐蛋鸡', type:'layer', category:'蛋鸡',
+    maturityDays:500, adultWeight:2.0, targetWeight:2.0,
+    chickPrice:4.0,毛鸡Price:8.5, eggPrice:9.8,
+    dailyFeedG:110, dailyWaterML:220,
+    desc:'高产褐壳蛋鸡，500天淘汰，年产蛋300+枚',
+    stages:{brooding:[0,42],growing:[43,140],laying:[141,500]},
+    eggStartDay:150, eggPeakRate:0.95
+  },
+  'hyline-gray': {
+    name:'海兰灰蛋鸡', type:'layer', category:'蛋鸡',
+    maturityDays:500, adultWeight:1.9, targetWeight:1.9,
+    chickPrice:4.2,毛鸡Price:8.5, eggPrice:9.8,
+    dailyFeedG:108, dailyWaterML:215,
+    desc:'高产灰壳蛋鸡，500天淘汰',
+    stages:{brooding:[0,42],growing:[43,140],laying:[141,500]},
+    eggStartDay:150, eggPeakRate:0.94
+  },
+  'jinghong1': {
+    name:'京红1号蛋鸡', type:'layer', category:'蛋鸡',
+    maturityDays:500, adultWeight:2.05, targetWeight:2.05,
+    chickPrice:4.5,毛鸡Price:8.8, eggPrice:10.0,
+    dailyFeedG:112, dailyWaterML:225,
+    desc:'国产褐壳蛋鸡配套系，适应性强',
+    stages:{brooding:[0,42],growing:[43,140],laying:[141,500]},
+    eggStartDay:150, eggPeakRate:0.95
+  },
+  'jingfen1': {
+    name:'京粉1号蛋鸡', type:'layer', category:'蛋鸡',
+    maturityDays:500, adultWeight:1.85, targetWeight:1.85,
+    chickPrice:4.3,毛鸡Price:8.6, eggPrice:10.2,
+    dailyFeedG:105, dailyWaterML:210,
+    desc:'国产粉壳蛋鸡配套系',
+    stages:{brooding:[0,42],growing:[43,140],laying:[141,500]},
+    eggStartDay:150, eggPeakRate:0.93
+  }
+};
+
+// ==================== 常见疫苗程序 ====================
+const VACCINE_SCHEDULE = [
+  {name:'马立克疫苗', recommendDay:1, interval:null, note:'出壳24h内皮下注射'},
+  {name:'新城疫疫苗 (ND)', recommendDay:7, interval:21, note:'首免点眼/滴鼻，二免21天后'},
+  {name:'传支疫苗 (IB)', recommendDay:7, interval:21, note:'通常与ND联免'},
+  {name:'法氏囊疫苗 (IBD)', recommendDay:14, interval:14, note:'首免饮水，二免28日龄'},
+  {name:'禽流感H5+H7疫苗', recommendDay:15, interval:30, note:'强制免疫，皮下注射'},
+  {name:'禽流感H9疫苗', recommendDay:20, interval:30, note:'可根据地区流行情况选择'},
+  {name:'鸡痘疫苗', recommendDay:25, interval:null, note:'翅膜刺种'},
+  {name:'传喉疫苗 (ILT)', recommendDay:35, interval:null, note:'仅疫区使用'},
+  {name:'支原体疫苗', recommendDay:7, interval:null, note:'可选'},
+  {name:'减蛋综合征疫苗 (EDS)', recommendDay:120, interval:null, note:'蛋鸡开产前免疫'},
+];
+
+// ==================== 中国城市数据 (300+ 地级市) ====================
+const CHINA_CITIES = [
+  {province:'北京',cities:['北京']},{province:'天津',cities:['天津']},
+  {province:'上海',cities:['上海']},{province:'重庆',cities:['重庆']},
+  {province:'河北',cities:['石家庄','唐山','秦皇岛','邯郸','邢台','保定','张家口','承德','沧州','廊坊','衡水']},
+  {province:'山西',cities:['太原','大同','阳泉','长治','晋城','朔州','晋中','运城','忻州','临汾','吕梁']},
+  {province:'内蒙古',cities:['呼和浩特','包头','乌海','赤峰','通辽','鄂尔多斯','呼伦贝尔','巴彦淖尔','乌兰察布','兴安','锡林郭勒','阿拉善']},
+  {province:'辽宁',cities:['沈阳','大连','鞍山','抚顺','本溪','丹东','锦州','营口','阜新','辽阳','盘锦','铁岭','朝阳','葫芦岛']},
+  {province:'吉林',cities:['长春','吉林','四平','辽源','通化','白山','松原','白城','延边']},
+  {province:'黑龙江',cities:['哈尔滨','齐齐哈尔','鸡西','鹤岗','双鸭山','大庆','伊春','佳木斯','七台河','牡丹江','黑河','绥化','大兴安岭']},
+  {province:'江苏',cities:['南京','无锡','徐州','常州','苏州','南通','连云港','淮安','盐城','扬州','镇江','泰州','宿迁']},
+  {province:'浙江',cities:['杭州','宁波','温州','嘉兴','湖州','绍兴','金华','衢州','舟山','台州','丽水']},
+  {province:'安徽',cities:['合肥','芜湖','蚌埠','淮南','马鞍山','淮北','铜陵','安庆','黄山','滁州','阜阳','宿州','六安','亳州','池州','宣城']},
+  {province:'福建',cities:['福州','厦门','莆田','三明','泉州','漳州','南平','龙岩','宁德']},
+  {province:'江西',cities:['南昌','景德镇','萍乡','九江','新余','鹰潭','赣州','吉安','宜春','抚州','上饶']},
+  {province:'山东',cities:['济南','青岛','淄博','枣庄','东营','烟台','潍坊','济宁','泰安','威海','日照','临沂','德州','聊城','滨州','菏泽']},
+  {province:'河南',cities:['郑州','开封','洛阳','平顶山','安阳','鹤壁','新乡','焦作','濮阳','许昌','漯河','三门峡','南阳','商丘','信阳','周口','驻马店','济源']},
+  {province:'湖北',cities:['武汉','黄石','十堰','宜昌','襄阳','鄂州','荆门','孝感','荆州','黄冈','咸宁','随州','恩施','仙桃','潜江','天门','神农架']},
+  {province:'湖南',cities:['长沙','株洲','湘潭','衡阳','邵阳','岳阳','常德','张家界','益阳','郴州','永州','怀化','娄底','湘西']},
+  {province:'广东',cities:['广州','韶关','深圳','珠海','汕头','佛山','江门','湛江','茂名','肇庆','惠州','梅州','汕尾','河源','阳江','清远','东莞','中山','潮州','揭阳','云浮']},
+  {province:'广西',cities:['南宁','柳州','桂林','梧州','北海','防城港','钦州','贵港','玉林','百色','贺州','河池','来宾','崇左']},
+  {province:'海南',cities:['海口','三亚','三沙','儋州','五指山','琼海','文昌','万宁','东方']},
+  {province:'四川',cities:['成都','自贡','攀枝花','泸州','德阳','绵阳','广元','遂宁','内江','乐山','南充','眉山','宜宾','广安','达州','雅安','巴中','资阳','阿坝','甘孜','凉山']},
+  {province:'贵州',cities:['贵阳','六盘水','遵义','安顺','毕节','铜仁','黔西南','黔东南','黔南']},
+  {province:'云南',cities:['昆明','曲靖','玉溪','保山','昭通','丽江','普洱','临沧','楚雄','红河','文山','西双版纳','大理','德宏','怒江','迪庆']},
+  {province:'西藏',cities:['拉萨','日喀则','昌都','林芝','山南','那曲','阿里']},
+  {province:'陕西',cities:['西安','铜川','宝鸡','咸阳','渭南','延安','汉中','榆林','安康','商洛']},
+  {province:'甘肃',cities:['兰州','嘉峪关','金昌','白银','天水','武威','张掖','平凉','酒泉','庆阳','定西','陇南','临夏','甘南']},
+  {province:'青海',cities:['西宁','海东','海北','黄南','海南','果洛','玉树','海西']},
+  {province:'宁夏',cities:['银川','石嘴山','吴忠','固原','中卫']},
+  {province:'新疆',cities:['乌鲁木齐','克拉玛依','吐鲁番','哈密','昌吉','博尔塔拉','巴音郭楞','阿克苏','克孜勒苏','喀什','和田','伊犁','塔城','阿勒泰','石河子']}
+];
+
+// ==================== 全局状态 ====================
+const Storage = {
+  get(key, def) { try { const v=localStorage.getItem('cfp_'+key); return v?JSON.parse(v):def; } catch(e) { return def; } },
+  set(key, val) { localStorage.setItem('cfp_'+key, JSON.stringify(val)); }
+};
+
+// 初始化/加载数据
+let state = {
+  chickens: Storage.get('chickens', []),
+  nextId: Storage.get('nextId', 1),
+  feedStock: Storage.get('feedStock', 0),    // kg
+  waterStock: Storage.get('waterStock', 0),  // L
+  money: Storage.get('money', 50000),           // 元
+  eggStock: Storage.get('eggStock', 0),         // 枚 (未售出鸡蛋暂存)
+  eggSales: Storage.get('eggSales', []),        // 销售记录
+  deaths: Storage.get('deaths', []),
+  marketData: Storage.get('marketData', {}),
+  marketLastUpdate: Storage.get('marketLastUpdate', ''),
+  weatherCache: Storage.get('weatherCache', {}),
+  greenhouses: Storage.get('greenhouses', []), // [{id,name,sensorHistory:[],tempMin,tempMax,humMin,humMax,simEnabled}]
+  alertLog: Storage.get('alertLog', []),
+  settings: Storage.get('settings', {
+    feedInterval: 60,       // 分钟
+    feedAmount: 15,          // g/只/次
+    waterInterval: 30,
+    waterAmount: 30,         // ml/只/次
+    tempMin: 10, tempMax: 30,
+    humMin: 40, humMax: 80,
+    priceDropThreshold: 5,
+    priceRiseThreshold: 10,
+    apiQWeatherKey: '',
+    apiJuheKey: '',
+    apiMarketUrl: '',
+    theme: 'light',
+    autoFeed: true,
+    autoEggs: true,
+    autoMarket: true,
+    autoWeather: true,
+    autoSensor: true,
+  }),
+  lastFeedTime: Storage.get('lastFeedTime', Date.now()),
+  lastWaterTime: Storage.get('lastWaterTime', Date.now()),
+  lastEggTime: Storage.get('lastEggTime', Date.now()),
+  lastMarketTime: Storage.get('lastMarketTime', 0),
+  lastWeatherTime: Storage.get('lastWeatherTime', 0),
+  selectedIds: Storage.get('selectedIds', []),
+};
+
+// 持久化辅助
+function saveAll() {
+  Storage.set('chickens', state.chickens);
+  Storage.set('nextId', state.nextId);
+  Storage.set('feedStock', state.feedStock);
+  Storage.set('waterStock', state.waterStock);
+  Storage.set('money', state.money);
+  Storage.set('eggStock', state.eggStock);
+  Storage.set('eggSales', state.eggSales);
+  Storage.set('deaths', state.deaths);
+  Storage.set('marketData', state.marketData);
+  Storage.set('marketLastUpdate', state.marketLastUpdate);
+  Storage.set('greenhouses', state.greenhouses);
+  Storage.set('alertLog', state.alertLog);
+  Storage.set('settings', state.settings);
+  Storage.set('lastFeedTime', state.lastFeedTime);
+  Storage.set('lastWaterTime', state.lastWaterTime);
+  Storage.set('lastEggTime', state.lastEggTime);
+  Storage.set('lastMarketTime', state.lastMarketTime);
+  Storage.set('lastWeatherTime', state.lastWeatherTime);
+  Storage.set('selectedIds', state.selectedIds);
+}
+
+// ==================== 鸡只管理 ====================
+function generateId() {
+  const id = 'CHN-' + String(state.nextId).padStart(4,'0');
+  state.nextId++;
+  return id;
+}
+
+function getBreed(key) { return BREEDS[key] || null; }
+function getBreedKeys() { return Object.keys(BREEDS); }
+
+function getChickenById(id) { return state.chickens.find(c=>c.id===id); }
+
+// 获取当前日龄
+function getAgeDays(chicken) {
+  const intro = new Date(chicken.introDate);
+  const now = new Date();
+  return Math.floor((now - intro) / 86400000) + (chicken.introAge || 0);
+}
+
+// 估算当前体重 (模拟生长曲线)
+function estimateWeight(chicken) {
+  const breed = getBreed(chicken.breed);
+  if (!breed) return chicken.weight || 0;
+  const age = getAgeDays(chicken);
+  const maturity = breed.maturityDays;
+  const adultW = breed.adultWeight;
+  const chickW = chicken.initialWeight || 0.04;
+  if (age >= maturity) return adultW * (0.98 + Math.random()*0.04);
+  // Logistic growth curve
+  const k = breed.type==='meat' ? 0.08 : 0.015;
+  const midPoint = maturity * 0.45;
+  const w = chickW + (adultW - chickW) / (1 + Math.exp(-k * (age - midPoint)));
+  return Math.round(w * 1000) / 1000;
+}
+
+// 计算日采食量 (g/只/天)
+function getDailyFeedIntake(chicken) {
+  const breed = getBreed(chicken.breed);
+  if (!breed) return 100;
+  const age = getAgeDays(chicken);
+  const stages = breed.stages;
+  let ratio = 1;
+  if (age <= stages.brooding[1]) ratio = 0.6;
+  else if (breed.type==='meat' && age >= stages.finishing[0]) ratio = 1.3;
+  return Math.round(breed.dailyFeedG * ratio);
+}
+
+// 计算产蛋率
+function getEggRate(chicken) {
+  const breed = getBreed(chicken.breed);
+  if (!breed || breed.type !== 'layer') return 0;
+  const age = getAgeDays(chicken);
+  if (age < breed.eggStartDay) return 0;
+  const layingDays = age - breed.eggStartDay;
+  // 产蛋曲线: 爬升→高峰→缓慢下降
+  let rate;
+  if (layingDays < 30) rate = breed.eggPeakRate * (0.3 + 0.7 * layingDays/30); // 爬升期
+  else if (layingDays < 200) rate = breed.eggPeakRate * (0.92 + 0.08 * Math.sin(layingDays/50)); // 高峰期
+  else rate = breed.eggPeakRate * Math.max(0.55, 1 - (layingDays-200)*0.002); // 下降期
+  // 温度影响
+  const temp = getCurrentTemp();
+  if (temp > 30) rate *= 0.85;
+  else if (temp < 5) rate *= 0.8;
+  return Math.max(0, Math.min(1, rate));
+}
+
+function getCurrentTemp() {
+  if (state.greenhouses.length > 0) {
+    const gh = state.greenhouses[0];
+    if (gh.sensorHistory.length > 0) return gh.sensorHistory[gh.sensorHistory.length-1].temp;
+  }
+  return 24; // 默认
+}
+
+// ==================== 行情数据 (API + 模拟兜底) ====================
+
+// 基准价格表（当 API 不可用时使用，数据来源：农业农村部 2024-2025 年均价）
+const MARKET_BASE_PRICE = {
+  'white-broiler': {毛鸡:9.2, chick:3.5},
+  'yellow-fast': {毛鸡:14.0, chick:3.8},
+  'yellow-mid': {毛鸡:16.0, chick:4.5},
+  'yellow-slow': {毛鸡:22.0, chick:5.5},
+  'hyline-brown': {毛鸡:8.5, chick:4.0,蛋:9.8},
+  'hyline-gray': {毛鸡:8.5, chick:4.2,蛋:9.8},
+  'jinghong1': {毛鸡:8.8, chick:4.5,蛋:10.0},
+  'jingfen1': {毛鸡:8.6, chick:4.3,蛋:10.2},
+};
+
+function generateMarketData() {
+  const data = {};
+  Object.keys(MARKET_BASE_PRICE).forEach(k => {
+    const bp = MARKET_BASE_PRICE[k];
+    const fluctuation = 1 + (Math.random()-0.5)*0.16;
+    data[k] = {};
+    if (bp.毛鸡) data[k].毛鸡 = Math.round(bp.毛鸡 * fluctuation * 100)/100;
+    if (bp.chick) data[k].chick = Math.round(bp.chick * fluctuation * 100)/100;
+    if (bp.蛋) data[k].蛋 = Math.round(bp.蛋 * fluctuation * 100)/100;
+    data[k].category = BREEDS[k].category;
+    data[k].name = BREEDS[k].name;
+    data[k].type = BREEDS[k].type;
+    data[k].source = 'simulated';
+  });
+  data._feedPrice = Math.round((2.8 + (Math.random()-0.5)*0.4) * 100)/100;
+  data._updateTime = new Date().toLocaleString('zh-CN');
+  data._source = '模拟数据(基于农业农村部基准价±8%)';
+  return data;
+}
+
+// 聚合数据 API — 农产品价格
+async function fetchMarketFromJuhe() {
+  const key = state.settings.apiJuheKey;
+  if (!key) throw new Error('未配置聚合数据 API Key');
+  const url = `https://apis.juhe.cn/agriculture/poultryPrice?key=${key}`;
+  const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  if (!resp.ok) throw new Error(`聚合数据 HTTP ${resp.status}`);
+  const json = await resp.json();
+  if (json.error_code !== 0) throw new Error(`聚合数据错误: ${json.reason}`);
+  // 解析聚合数据返回并映射到我们的品种
+  const data = {};
+  const breedMap = {
+    '白羽肉鸡': 'white-broiler', '黄羽肉鸡': 'yellow-fast',
+    '海兰褐': 'hyline-brown', '海兰灰': 'hyline-gray',
+    '京红': 'jinghong1', '京粉': 'jingfen1',
+  };
+  // 聚合数据通常返回数组形式的报价
+  const list = json.result?.list || json.result || [];
+  list.forEach(item => {
+    const breedKey = breedMap[item.name] || null;
+    if (breedKey && BREEDS[breedKey]) {
+      data[breedKey] = {
+        毛鸡: parseFloat(item.price) || MARKET_BASE_PRICE[breedKey].毛鸡,
+        蛋: parseFloat(item.eggPrice) || MARKET_BASE_PRICE[breedKey].蛋 || null,
+        chick: parseFloat(item.chickPrice) || MARKET_BASE_PRICE[breedKey].chick,
+        category: BREEDS[breedKey].category,
+        name: BREEDS[breedKey].name,
+        type: BREEDS[breedKey].type,
+        source: 'juhe',
+      };
+    }
+  });
+  if (Object.keys(data).length === 0) throw new Error('聚合数据未返回可用品种价格');
+  data._feedPrice = parseFloat(json.result?.feedPrice) || 2.8;
+  data._updateTime = new Date().toLocaleString('zh-CN');
+  data._source = '聚合数据 API (juhe.cn)';
+  return data;
+}
+
+// 自定义行情 API
+async function fetchMarketFromCustomUrl() {
+  const url = state.settings.apiMarketUrl;
+  if (!url) throw new Error('未配置自定义行情 API');
+  const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  if (!resp.ok) throw new Error(`自定义API HTTP ${resp.status}`);
+  const json = await resp.json();
+  // 尝试自动解析，期望格式: { breedKey: { 毛鸡, 蛋, chick } 或 { data: [...] }
+  const raw = json.data || json.result || json;
+  if (Array.isArray(raw)) {
+    const data = {};
+    raw.forEach(item => {
+      const k = item.breed || item.key || item.id;
+      if (k && BREEDS[k]) {
+        data[k] = {
+          毛鸡: parseFloat(item.毛鸡||item.price)||MARKET_BASE_PRICE[k]?.毛鸡||0,
+          蛋: parseFloat(item.蛋||item.eggPrice)||MARKET_BASE_PRICE[k]?.蛋||0,
+          chick: parseFloat(item.chick||item.chickPrice)||MARKET_BASE_PRICE[k]?.chick||0,
+          category: BREEDS[k].category, name: BREEDS[k].name, type: BREEDS[k].type,
+          source: 'custom',
+        };
+      }
+    });
+    if (Object.keys(data).length === 0) throw new Error('自定义API未返回匹配品种');
+    data._feedPrice = parseFloat(json.feedPrice) || 2.8;
+    data._updateTime = new Date().toLocaleString('zh-CN');
+    data._source = '自定义行情 API';
+    return data;
+  }
+  // 尝试作为对象直接映射
+  if (typeof raw === 'object') {
+    const data = {};
+    Object.keys(raw).forEach(k => {
+      if (k === 'feedPrice' || k === '_feedPrice') { data._feedPrice = parseFloat(raw[k]); return; }
+      if (BREEDS[k]) {
+        const v = raw[k];
+        data[k] = {
+          毛鸡: parseFloat(v.毛鸡||v.price)||MARKET_BASE_PRICE[k]?.毛鸡||0,
+          蛋: parseFloat(v.蛋||v.eggPrice)||MARKET_BASE_PRICE[k]?.蛋||0,
+          chick: parseFloat(v.chick||v.chickPrice)||MARKET_BASE_PRICE[k]?.chick||0,
+          category: BREEDS[k].category, name: BREEDS[k].name, type: BREEDS[k].type,
+          source: 'custom',
+        };
+      }
+    });
+    if (Object.keys(data).filter(k=>k!=='_feedPrice').length === 0) throw new Error('自定义API对象未匹配品种');
+    data._feedPrice = data._feedPrice || 2.8;
+    data._updateTime = new Date().toLocaleString('zh-CN');
+    data._source = '自定义行情 API';
+    return data;
+  }
+  throw new Error('无法解析自定义API返回格式');
+}
+
+// 统一行情获取：API优先 → 模拟兜底
+async function fetchMarketData() {
+  const results = [];
+  // 按优先级尝试
+  if (state.settings.apiJuheKey) {
+    try { return await fetchMarketFromJuhe(); } catch(e) { results.push('聚合数据: '+e.message); }
+  }
+  if (state.settings.apiMarketUrl) {
+    try { return await fetchMarketFromCustomUrl(); } catch(e) { results.push('自定义API: '+e.message); }
+  }
+  // 兜底：本地模拟
+  const data = generateMarketData();
+  if (results.length > 0) {
+    addAlert('warn', '⚠️ 行情API均无法连接('+results.join('; ')+')，已使用模拟数据。');
+  }
+  return data;
+}
+
+// 同步版（兼容旧调用，返回模拟数据）
+function getMarketDataSync() {
+  return generateMarketData();
+}
+
+// ==================== 城市坐标数据库 (Open-Meteo 免费API使用) ====================
+// 包含中国主要城市经纬度，用于 Open-Meteo 免费天气接口
+const CITY_COORDS = {
+  '北京':[39.90,116.41],'天津':[39.13,117.18],'上海':[31.23,121.47],'重庆':[29.56,106.55],
+  '石家庄':[38.04,114.51],'唐山':[39.63,118.18],'秦皇岛':[39.94,119.60],'邯郸':[36.61,114.49],'邢台':[37.07,114.50],'保定':[38.87,115.47],'张家口':[40.77,114.88],'承德':[40.98,117.94],'沧州':[38.30,116.84],'廊坊':[39.52,116.68],'衡水':[37.74,115.67],
+  '太原':[37.87,112.55],'大同':[40.09,113.30],'阳泉':[37.86,113.58],'长治':[36.19,113.12],'晋城':[35.50,112.85],'朔州':[39.33,112.43],'晋中':[37.69,112.75],'运城':[35.03,111.00],'忻州':[38.42,112.73],'临汾':[36.09,111.52],'吕梁':[37.52,111.14],
+  '呼和浩特':[40.84,111.75],'包头':[40.66,109.84],'乌海':[39.66,106.82],'赤峰':[42.28,118.96],'通辽':[43.62,122.27],'鄂尔多斯':[39.61,109.78],'呼伦贝尔':[49.21,119.77],'巴彦淖尔':[40.74,107.39],'乌兰察布':[41.00,113.13],
+  '沈阳':[41.80,123.43],'大连':[38.91,121.61],'鞍山':[41.11,123.00],'抚顺':[41.88,123.96],'本溪':[41.30,123.77],'丹东':[40.13,124.39],'锦州':[41.10,121.13],'营口':[40.67,122.23],'阜新':[42.02,121.67],'辽阳':[41.27,123.17],'盘锦':[41.12,122.07],'铁岭':[42.29,123.84],'朝阳':[41.58,120.45],'葫芦岛':[40.71,120.84],
+  '长春':[43.90,125.32],'吉林':[43.84,126.55],'四平':[43.17,124.35],'辽源':[42.89,125.14],'通化':[41.73,125.94],'白山':[41.94,126.43],'松原':[45.14,124.83],'白城':[45.62,122.84],
+  '哈尔滨':[45.75,126.64],'齐齐哈尔':[47.35,123.92],'鸡西':[45.30,130.98],'鹤岗':[47.33,130.30],'双鸭山':[46.64,131.16],'大庆':[46.59,125.03],'伊春':[47.73,128.90],'佳木斯':[46.80,130.32],'七台河':[45.77,131.00],'牡丹江':[44.58,129.61],'黑河':[50.25,127.53],'绥化':[46.64,126.97],
+  '南京':[32.06,118.80],'无锡':[31.57,120.30],'徐州':[34.27,117.19],'常州':[31.77,119.95],'苏州':[31.30,120.62],'南通':[31.98,120.89],'连云港':[34.60,119.22],'淮安':[33.61,119.02],'盐城':[33.35,120.16],'扬州':[32.39,119.41],'镇江':[32.19,119.43],'泰州':[32.46,119.92],'宿迁':[33.96,118.28],
+  '杭州':[30.27,120.15],'宁波':[29.87,121.54],'温州':[28.00,120.70],'嘉兴':[30.77,120.75],'湖州':[30.89,120.09],'绍兴':[30.03,120.58],'金华':[29.08,119.65],'衢州':[28.94,118.87],'舟山':[30.02,122.11],'台州':[28.66,121.42],'丽水':[28.45,119.92],
+  '合肥':[31.82,117.23],'芜湖':[31.35,118.43],'蚌埠':[32.92,117.39],'淮南':[32.63,117.02],'马鞍山':[31.67,118.51],'淮北':[33.96,116.80],'铜陵':[30.93,117.82],'安庆':[30.53,117.05],'黄山':[29.71,118.34],'滁州':[32.30,118.32],'阜阳':[32.89,115.81],'宿州':[33.64,116.97],'六安':[31.74,116.50],'亳州':[33.87,115.78],'池州':[30.66,117.49],'宣城':[30.94,118.76],
+  '福州':[26.07,119.30],'厦门':[24.48,118.09],'莆田':[25.43,119.01],'三明':[26.26,117.64],'泉州':[24.87,118.59],'漳州':[24.51,117.65],'南平':[26.64,118.18],'龙岩':[25.08,117.03],'宁德':[26.66,119.55],
+  '南昌':[28.68,115.86],'景德镇':[29.27,117.18],'萍乡':[27.62,113.85],'九江':[29.71,116.00],'新余':[27.82,114.92],'鹰潭':[28.23,117.04],'赣州':[25.83,114.93],'吉安':[27.11,114.99],'宜春':[27.81,114.39],'抚州':[27.95,116.36],'上饶':[28.45,117.97],
+  '济南':[36.67,117.00],'青岛':[36.07,120.38],'淄博':[36.81,118.05],'枣庄':[34.81,117.32],'东营':[37.43,118.67],'烟台':[37.46,121.45],'潍坊':[36.71,119.16],'济宁':[35.42,116.59],'泰安':[36.20,117.09],'威海':[37.51,122.12],'日照':[35.42,119.53],'临沂':[35.10,118.35],'德州':[37.44,116.30],'聊城':[36.46,115.99],'滨州':[37.38,118.02],'菏泽':[35.23,115.48],
+  '郑州':[34.75,113.66],'开封':[34.80,114.31],'洛阳':[34.62,112.45],'平顶山':[33.74,113.29],'安阳':[36.10,114.39],'鹤壁':[35.75,114.30],'新乡':[35.30,113.93],'焦作':[35.24,113.24],'濮阳':[35.76,115.03],'许昌':[34.04,113.85],'漯河':[33.58,114.02],'三门峡':[34.77,111.20],'南阳':[33.00,112.53],'商丘':[34.41,115.66],'信阳':[32.13,114.08],'周口':[33.63,114.70],'驻马店':[32.98,114.02],
+  '武汉':[30.59,114.31],'黄石':[30.20,115.08],'十堰':[32.65,110.80],'宜昌':[30.69,111.29],'襄阳':[32.04,112.14],'鄂州':[30.40,114.89],'荆门':[31.04,112.20],'孝感':[30.93,113.95],'荆州':[30.34,112.24],'黄冈':[30.45,114.87],'咸宁':[29.84,114.33],'随州':[31.69,113.38],'恩施':[30.28,109.48],
+  '长沙':[28.23,112.94],'株洲':[27.83,113.13],'湘潭':[27.83,112.94],'衡阳':[26.89,112.57],'邵阳':[27.24,111.47],'岳阳':[29.37,113.09],'常德':[29.04,111.70],'张家界':[29.12,110.48],'益阳':[28.55,112.36],'郴州':[25.77,113.01],'永州':[26.42,111.61],'怀化':[27.57,110.00],'娄底':[27.73,112.00],
+  '广州':[23.13,113.26],'韶关':[24.80,113.60],'深圳':[22.54,114.06],'珠海':[22.27,113.58],'汕头':[23.35,116.68],'佛山':[23.02,113.12],'江门':[22.58,113.08],'湛江':[21.20,110.36],'茂名':[21.66,110.92],'肇庆':[23.05,112.47],'惠州':[23.11,114.42],'梅州':[24.29,116.12],'汕尾':[22.79,115.38],'河源':[23.74,114.70],'阳江':[21.86,111.98],'清远':[23.68,113.06],'东莞':[23.02,113.75],'中山':[22.52,113.38],'潮州':[23.66,116.62],'揭阳':[23.55,116.37],'云浮':[22.92,112.04],
+  '南宁':[22.82,108.37],'柳州':[24.31,109.41],'桂林':[25.27,110.28],'梧州':[23.47,111.28],'北海':[21.47,109.12],'防城港':[21.69,108.35],'钦州':[21.96,108.63],'贵港':[23.11,109.60],'玉林':[22.63,110.18],'百色':[23.90,106.62],'贺州':[24.40,111.57],'河池':[24.69,108.06],'来宾':[23.73,109.22],'崇左':[22.38,107.37],
+  '海口':[20.02,110.32],'三亚':[18.25,109.51],
+  '成都':[30.57,104.07],'自贡':[29.34,104.78],'攀枝花':[26.58,101.72],'泸州':[28.87,105.44],'德阳':[31.13,104.40],'绵阳':[31.47,104.68],'广元':[32.44,105.82],'遂宁':[30.53,105.59],'内江':[29.58,105.06],'乐山':[29.60,103.76],'南充':[30.80,106.08],'眉山':[30.08,103.85],'宜宾':[28.77,104.62],'广安':[30.46,106.63],'达州':[31.21,107.47],'雅安':[29.98,103.00],'巴中':[31.86,106.75],'资阳':[30.13,104.63],
+  '贵阳':[26.65,106.63],'六盘水':[26.59,104.83],'遵义':[27.70,106.93],'安顺':[26.25,105.95],'毕节':[27.30,105.29],'铜仁':[27.72,109.19],
+  '昆明':[25.04,102.71],'曲靖':[25.49,103.80],'玉溪':[24.35,102.55],'保山':[25.11,99.17],'昭通':[27.34,103.72],'丽江':[26.88,100.23],'普洱':[22.78,100.97],'临沧':[23.88,100.08],'大理':[25.59,100.23],
+  '拉萨':[29.65,91.13],'日喀则':[29.27,88.88],
+  '西安':[34.26,108.94],'铜川':[34.90,108.95],'宝鸡':[34.36,107.24],'咸阳':[34.33,108.71],'渭南':[34.50,109.51],'延安':[36.59,109.49],'汉中':[33.07,107.02],'榆林':[38.29,109.73],'安康':[32.69,109.03],'商洛':[33.87,109.94],
+  '兰州':[36.06,103.83],'嘉峪关':[39.77,98.29],'金昌':[38.50,102.19],'白银':[36.55,104.14],'天水':[34.58,105.72],'武威':[37.93,102.64],'张掖':[38.93,100.45],'平凉':[35.54,106.67],'酒泉':[39.74,98.52],'庆阳':[35.71,107.64],'定西':[35.58,104.62],
+  '西宁':[36.62,101.78],'海东':[36.48,102.10],
+  '银川':[38.49,106.23],'石嘴山':[38.98,106.38],'吴忠':[37.99,106.20],'固原':[36.02,106.28],'中卫':[37.50,105.19],
+  '乌鲁木齐':[43.83,87.62],'克拉玛依':[45.58,84.87],'吐鲁番':[42.95,89.19],'哈密':[42.84,93.51],
+  '延边':[42.91,129.51],'大兴安岭':[52.13,124.59],'三沙':[16.83,112.33],'儋州':[19.52,109.58],'五指山':[18.77,109.52],'琼海':[19.25,110.47],'文昌':[19.61,110.75],'万宁':[18.79,110.39],'东方':[19.10,108.65],
+  '兴安':[46.08,122.04],'锡林郭勒':[43.94,116.03],'阿拉善':[38.84,105.73],
+  '阿坝':[31.90,102.22],'甘孜':[30.05,101.96],'凉山':[27.90,102.27],
+  '黔西南':[25.09,104.90],'黔东南':[26.58,107.98],'黔南':[26.25,107.52],
+  '楚雄':[25.05,101.55],'红河':[23.37,102.42],'文山':[23.37,104.24],'西双版纳':[22.00,100.80],'德宏':[24.43,98.58],'怒江':[25.85,98.85],'迪庆':[27.83,99.70],
+  '昌都':[31.14,97.18],'林芝':[29.65,94.36],'山南':[29.24,91.77],'那曲':[31.48,92.06],'阿里':[32.50,80.10],
+  '黄南':[35.52,102.02],'海南州':[36.29,100.62],'果洛':[34.47,100.24],'玉树':[32.99,97.01],'海西':[37.37,97.37],
+  '临夏':[35.60,103.21],'甘南':[34.98,102.91],
+  '博尔塔拉':[44.90,82.07],'巴音郭楞':[41.76,86.15],'阿克苏':[41.17,80.26],'克孜勒苏':[39.71,76.17],'喀什':[39.47,75.99],'和田':[37.11,79.92],'伊犁':[43.92,81.32],'塔城':[46.75,82.98],'阿勒泰':[47.85,88.14],'石河子':[44.30,86.04],
+  '仙桃':[30.33,113.45],'潜江':[30.40,112.90],'天门':[30.67,113.17],'神农架':[31.74,110.68],
+  '湘西':[28.31,109.74],
+  '济源':[35.07,112.59],
+};
+
+// ==================== 天气 API 集成 ====================
+
+// 和风天气 API — 实时天气 + 3天预报 (devapi.qweather.com)
+async function fetchWeatherFromQWeather(cityName) {
+  const key = state.settings.apiQWeatherKey;
+  if (!key) throw new Error('未配置和风天气 API Key');
+  const base = 'https://devapi.qweather.com/v7';
+  // 先搜索城市 ID
+  const searchUrl = `https://geoapi.qweather.com/v2/city/lookup?location=${encodeURIComponent(cityName)}&key=${key}`;
+  const geoResp = await fetch(searchUrl, { signal: AbortSignal.timeout(5000) });
+  if (!geoResp.ok) throw new Error(`和风天气地理API HTTP ${geoResp.status}`);
+  const geoJson = await geoResp.json();
+  if (geoJson.code !== '200' || !geoJson.location || geoJson.location.length === 0) {
+    throw new Error(`和风天气未找到城市: ${cityName}`);
+  }
+  const locId = geoJson.location[0].id;
+  // 获取实时天气 + 3天预报
+  const [nowResp, fcResp] = await Promise.all([
+    fetch(`${base}/weather/now?location=${locId}&key=${key}`, {signal: AbortSignal.timeout(5000)}),
+    fetch(`${base}/weather/3d?location=${locId}&key=${key}`, {signal: AbortSignal.timeout(5000)})
+  ]);
+  if (!nowResp.ok || !fcResp.ok) throw new Error('和风天气数据获取失败');
+  const nowJson = await nowResp.json();
+  const fcJson = await fcResp.json();
+  if (nowJson.code !== '200' || fcJson.code !== '200') throw new Error('和风天气返回错误');
+  const now = nowJson.now;
+  const forecast = fcJson.daily.map(d => ({
+    date: d.fxDate,
+    tempHigh: parseInt(d.tempMax), tempLow: parseInt(d.tempMin),
+    condition: d.textDay,
+    icon: {'晴':'☀️','多云':'⛅','阴':'☁️','阵雨':'🌧️','小雨':'🌧️','中雨':'🌧️','大雨':'🌧️','暴雨':'🌧️','雷阵雨':'⛈️','小雪':'🌨️','中雪':'🌨️','大雪':'🌨️','雾':'🌫️','霾':'🌫️','扬沙':'💨','沙尘暴':'💨'}[d.textDay]||'🌤️',
+  }));
+  return {
+    city: cityName,
+    temp: parseFloat(now.temp),
+    humidity: parseFloat(now.humidity),
+    windSpeed: parseFloat(now.windSpeed),
+    windDir: now.windDir,
+    condition: now.text,
+    icon: {'晴':'☀️','多云':'⛅','阴':'☁️','阵雨':'🌧️','小雨':'🌧️','中雨':'🌧️','大雨':'🌧️','暴雨':'🌧️','雷阵雨':'⛈️','小雪':'🌨️','中雪':'🌨️','大雪':'🌨️','雾':'🌫️','霾':'🌫️','扬沙':'💨'}[now.text]||'🌤️',
+    updateTime: new Date().toLocaleString('zh-CN'),
+    source: '和风天气 API (devapi.qweather.com)',
+    forecast,
+  };
+}
+
+// Open-Meteo 免费 API — 无需 API Key (open-meteo.com)
+async function fetchWeatherFromOpenMeteo(cityName) {
+  const coords = CITY_COORDS[cityName];
+  if (!coords) throw new Error(`城市 "${cityName}" 不在坐标库中`);
+  const [lat, lon] = coords;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Shanghai&forecast_days=4`;
+  const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  if (!resp.ok) throw new Error(`Open-Meteo HTTP ${resp.status}`);
+  const json = await resp.json();
+  const cur = json.current;
+  const daily = json.daily;
+  // WMO Weather codes → Chinese
+  const wmoMap = {
+    0:'晴',1:'晴',2:'多云',3:'阴',45:'雾',48:'雾',51:'小雨',53:'小雨',55:'中雨',
+    61:'小雨',63:'中雨',65:'大雨',71:'小雪',73:'中雪',75:'大雪',77:'雪',
+    80:'阵雨',81:'中雨',82:'大雨',85:'小雪',86:'中雪',95:'雷阵雨',96:'雷阵雨',99:'雷阵雨',
+  };
+  const wmoIcons = {
+    0:'☀️',1:'☀️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌧️',53:'🌧️',55:'🌧️',
+    61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'🌨️',77:'🌨️',
+    80:'🌧️',81:'🌧️',82:'🌧️',85:'🌨️',86:'🌨️',95:'⛈️',96:'⛈️',99:'⛈️',
+  };
+  const windDirs = ['北风','东北风','东风','东南风','南风','西南风','西风','西北风'];
+  const windIdx = Math.round((cur.wind_direction_10m % 360) / 45) % 8;
+  const condition = wmoMap[cur.weather_code] || '未知';
+  return {
+    city: cityName,
+    temp: Math.round(cur.temperature_2m * 10) / 10,
+    humidity: cur.relative_humidity_2m,
+    windSpeed: Math.round(cur.wind_speed_10m * 10) / 10,
+    windDir: windDirs[windIdx],
+    condition,
+    icon: wmoIcons[cur.weather_code] || '🌤️',
+    updateTime: new Date().toLocaleString('zh-CN'),
+    source: 'Open-Meteo 免费 API (open-meteo.com)',
+    forecast: daily.time.slice(0, 3).map((date, i) => ({
+      date: new Date(date).toLocaleDateString('zh-CN', {month:'short', day:'numeric'}),
+      tempHigh: Math.round(daily.temperature_2m_max[i]),
+      tempLow: Math.round(daily.temperature_2m_min[i]),
+      condition: wmoMap[daily.weather_code[i]] || '未知',
+      icon: wmoIcons[daily.weather_code[i]] || '🌤️',
+    })),
+  };
+}
+
+// 模拟天气(当所有API不可用时的兜底)
+function simulateWeather(cityName) {
+  const conditions = ['晴','多云','阴','小雨','中雨','大雨','雷阵雨','小雪','中雪','雾','霾','扬沙'];
+  const icons = {'晴':'☀️','多云':'⛅','阴':'☁️','小雨':'🌧️','中雨':'🌧️','大雨':'🌧️','雷阵雨':'⛈️','小雪':'🌨️','中雪':'🌨️','雾':'🌫️','霾':'🌫️','扬沙':'💨'};
+  const weights = [15,12,8,5,4,3,2,1,1,2,2,1];
+  const total = weights.reduce((a,b)=>a+b,0);
+  let r0=Math.random()*total, idx=0;
+  for(let s=0; s<weights.length; s++) { r0-=weights[s]; if(r0<=0){idx=s;break;} }
+  const season = new Date().getMonth();
+  let baseTemp = 25;
+  if (cityName.includes('哈尔滨')||cityName.includes('长春')||cityName.includes('黑河')) baseTemp = season<2||season>9? -5:22;
+  else if (cityName.includes('北京')||cityName.includes('石家庄')||cityName.includes('沈阳')) baseTemp = season<2||season>9? 0:26;
+  else if (cityName.includes('广州')||cityName.includes('深圳')||cityName.includes('海口')) baseTemp = season<2||season>9? 15:32;
+  else if (cityName.includes('成都')||cityName.includes('重庆')) baseTemp = season<2||season>9? 5:28;
+  else baseTemp = season<2||season>9? 3:25;
+  const temp = Math.round((baseTemp + (Math.random()-0.5)*6)*10)/10;
+  const humidity = Math.round(40 + Math.random()*50);
+  const windSpeed = Math.round((1+Math.random()*6)*10)/10;
+  const windDirs = ['北风','东北风','东风','东南风','南风','西南风','西风','西北风'];
+  return {
+    city: cityName, temp, humidity, windSpeed,
+    windDir: windDirs[Math.floor(Math.random()*8)],
+    condition: conditions[idx], icon: icons[conditions[idx]],
+    updateTime: new Date().toLocaleString('zh-CN'),
+    source: '本地模拟数据',
+    forecast: Array.from({length:3}, (_,i)=>{
+      const fc = (idx + Math.floor(Math.random()*5)-2 + conditions.length) % conditions.length;
+      return {
+        date: new Date(Date.now()+(i+1)*86400000).toLocaleDateString('zh-CN',{month:'short',day:'numeric'}),
+        tempHigh: Math.round(temp + (i+1)*(Math.random()>0.5?2:-2) + Math.random()*4),
+        tempLow: Math.round(temp + (i+1)*(Math.random()>0.5?2:-2) - 4 - Math.random()*4),
+        condition: conditions[fc], icon: icons[conditions[fc]],
+      };
+    }),
+  };
+}
+
+// 统一天气获取：和风天气 → Open-Meteo → 模拟兜底
+async function fetchWeather(cityName) {
+  if (!cityName) throw new Error('未指定城市');
+  const errors = [];
+  // 优先级: QWeather > Open-Meteo > simulate
+  if (state.settings.apiQWeatherKey) {
+    try { return await fetchWeatherFromQWeather(cityName); } catch(e) { errors.push('和风: '+e.message); }
+  }
+  try { return await fetchWeatherFromOpenMeteo(cityName); } catch(e) { errors.push('Open-Meteo: '+e.message); }
+  // 兜底
+  const w = simulateWeather(cityName);
+  if (errors.length > 0) w._fallbackNote = errors.join(' | ');
+  return w;
+}
+
+function getWeatherAdvice(weather) {
+  const advices = [];
+  if (weather.temp > 35) advices.push({level:'danger',text:'⚠️ 高温预警！建议开启湿帘+风机降温，确保饮水充足，饲料中添加维生素C抗应激。'});
+  else if (weather.temp > 30) advices.push({level:'warn',text:'🌡️ 天气较热，注意通风降温，适当降低饲养密度。'});
+  if (weather.temp < 5) advices.push({level:'danger',text:'❄️ 低温预警！加强保温措施，检查供暖设备，防止水管冻结。'});
+  else if (weather.temp < 10) advices.push({level:'warn',text:'🥶 温度偏低，注意鸡舍保温，减少通风量。'});
+  if (weather.humidity > 85) advices.push({level:'warn',text:'💧 湿度过高，加强通风排湿，注意垫料管理防球虫病。'});
+  if (weather.humidity < 30) advices.push({level:'warn',text:'🏜️ 空气干燥，适当喷雾增湿，注意呼吸道健康。'});
+  if (weather.windSpeed > 8) advices.push({level:'warn',text:'💨 大风天气，检查鸡舍结构安全，减少放养。'});
+  if (['大雨','暴雨','雷阵雨','中雨'].includes(weather.condition)) advices.push({level:'info',text:'🌧️ 雨天注意鸡舍防漏，保持舍内干燥。'});
+  if (weather.condition==='霾'||weather.condition==='扬沙') advices.push({level:'warn',text:'😷 空气污染，减少通风或使用过滤设备。'});
+  if (advices.length===0) advices.push({level:'success',text:'✅ 天气状况良好，适合正常养殖管理。'});
+  return advices;
+}
+function simulateSensorForGh(gh) {
+  const prev = gh.sensorHistory.length > 0 ? gh.sensorHistory[gh.sensorHistory.length-1] : {temp:24, humidity:60};
+  const temp = Math.round((prev.temp + (Math.random()-0.5)*1.5) * 10) / 10;
+  const humidity = Math.round(Math.max(20, Math.min(95, prev.humidity + (Math.random()-0.5)*4)));
+  return {temp: Math.max(10, Math.min(35, temp)), humidity, time: Date.now()};
+}
+
+// ==================== 告警系统 ====================
+function addAlert(type, message) {
+  state.alertLog.unshift({type, message, time: new Date().toLocaleString('zh-CN')});
+  if (state.alertLog.length > 200) state.alertLog.length = 200;
+}
+
+// ==================== 核心逻辑 ====================
+
+// 自动喂食逻辑
+function processAutoFeed() {
+  if (!state.settings.autoFeed) return;
+  const now = Date.now();
+  const feedInterval = state.settings.feedInterval * 60000;
+  const waterInterval = state.settings.waterInterval * 60000;
+
+  const aliveChickens = state.chickens.filter(c=>c.status==='alive');
+  if (aliveChickens.length === 0) return;
+  const totalCount = aliveChickens.length;
+
+  // 检查喂食
+  if (now - state.lastFeedTime >= feedInterval) {
+    // 计算消耗 = 每只每次采食量(g) * 数量 / 1000 → kg
+    const totalFeedG = state.settings.feedAmount * totalCount;
+    const consumedKg = totalFeedG / 1000;
+    if (state.feedStock >= consumedKg) {
+      state.feedStock = Math.round((state.feedStock - consumedKg) * 100) / 100;
+      state.lastFeedTime = now;
+    } else {
+      addAlert('danger', `⚠️ 饲料库存不足！当前 ${state.feedStock.toFixed(1)}kg，需 ${consumedKg.toFixed(1)}kg，自动喂食暂停。`);
+    }
+  }
+
+  // 检查喂水
+  if (now - state.lastWaterTime >= waterInterval) {
+    const totalWaterML = state.settings.waterAmount * totalCount;
+    const consumedL = totalWaterML / 1000;
+    if (state.waterStock >= consumedL) {
+      state.waterStock = Math.round((state.waterStock - consumedL) * 100) / 100;
+      state.lastWaterTime = now;
+    } else {
+      addAlert('danger', `⚠️ 饮水库存不足！当前 ${state.waterStock.toFixed(1)}L，需 ${consumedL.toFixed(1)}L，自动喂水暂停。`);
+    }
+  }
+  saveAll();
+}
+
+// 自动产蛋逻辑
+function processAutoEggs() {
+  if (!state.settings.autoEggs) return;
+  const now = Date.now();
+  const hourMs = 3600000;
+  if (now - state.lastEggTime < hourMs) return; // 每小时收集一次
+  state.lastEggTime = now;
+
+  const layers = state.chickens.filter(c=>c.status==='alive' && getBreed(c.breed)?.type==='layer');
+  let totalEggs = 0;
+  layers.forEach(c => {
+    const rate = getEggRate(c);
+    const laid = Math.random() < rate ? 1 : 0;
+    if (laid) {
+      c.eggRecords = c.eggRecords || [];
+      const today = new Date().toISOString().slice(0,10);
+      const todayRecord = c.eggRecords.find(r=>r.date===today);
+      if (todayRecord) todayRecord.count++;
+      else c.eggRecords.push({date: today, count: 1});
+      totalEggs++;
+    }
+  });
+  if (totalEggs > 0) {
+    state.eggStock += totalEggs;
+  }
+  saveAll();
+}
+
+// 自动行情刷新
+async function processAutoMarket() {
+  if (!state.settings.autoMarket) return;
+  const now = Date.now();
+  const interval = 3600000; // 每小时
+  if (now - state.lastMarketTime < interval) return;
+  try {
+    state.marketData = await fetchMarketData();
+  } catch(e) {
+    state.marketData = getMarketDataSync();
+    addAlert('warn', `行情API获取失败: ${e.message}，使用模拟数据。`);
+  }
+  state.marketLastUpdate = new Date().toLocaleString('zh-CN');
+  state.lastMarketTime = now;
+  checkPriceAlerts();
+  saveAll();
+  updateMarketTable();
+}
+
+// 行情预警
+function checkPriceAlerts() {
+  const prevPrices = Storage.get('prevPrices', {});
+  const threshold = state.settings.priceDropThreshold / 100;
+  const riseThreshold = state.settings.priceRiseThreshold / 100;
+  Object.keys(state.marketData).forEach(k => {
+    if (k.startsWith('_')) return;
+    const md = state.marketData[k];
+    const prev = prevPrices[k];
+    if (md.毛鸡 && prev?.毛鸡) {
+      const change = (md.毛鸡 - prev.毛鸡) / prev.毛鸡;
+      if (change < -threshold) addAlert('warn', `📉 ${md.name} 毛鸡价格下跌 ${Math.abs(change*100).toFixed(1)}%，建议尽快出栏！`);
+      else if (change > riseThreshold) addAlert('info', `📈 ${md.name} 毛鸡价格上涨 ${(change*100).toFixed(1)}%，利好！`);
+    }
+    if (md.蛋 && prev?.蛋) {
+      const change = (md.蛋 - prev.蛋) / prev.蛋;
+      if (change > riseThreshold) addAlert('success', `📈 鸡蛋价格上涨 ${(change*100).toFixed(1)}%，可考虑增加蛋鸡存栏！`);
+    }
+  });
+  // 保存当前价格为下次比较基准
+  const prices = {};
+  Object.keys(state.marketData).forEach(k => {
+    if (k.startsWith('_')) return;
+    prices[k] = {...state.marketData[k]};
+  });
+  Storage.set('prevPrices', prices);
+}
+
+// 计算鸡群日龄分布，返回育雏/育成/产蛋(育肥)各阶段平均日龄和建议
+function getStageAdvice() {
+  const alive = state.chickens.filter(c=>c.status==='alive');
+  if (alive.length===0) return {stage:'无鸡群', advice:'暂无鸡只，请先引入鸡苗。', stats:{}};
+
+  const ages = alive.map(c=>getAgeDays(c));
+  const avgAge = Math.round(ages.reduce((a,b)=>a+b,0)/ages.length);
+  const breeds = [...new Set(alive.map(c=>c.breed))];
+
+  // 检测主要类型
+  const hasLayer = breeds.some(b=>getBreed(b)?.type==='layer');
+  const hasMeat = breeds.some(b=>getBreed(b)?.type==='meat');
+
+  let stage, advice='';
+  const stats = {avgAge, count:alive.length, breeds: breeds.map(b=>getBreed(b)?.name).join(', ')};
+
+  if (hasLayer && hasMeat) {
+    stage = '混合养殖';
+    advice = '⚠️ 检测到蛋鸡与肉鸡混养。建议分开管理，蛋鸡肉鸡对饲料营养、光照、空间需求差异较大。';
+    if (avgAge <= 42) advice += '\n• <b>育雏期管理：</b>温度33-35°C（每周降2-3°C），相对湿度60-70%，24小时光照（逐步减至自然光照），饲喂高蛋白雏鸡料。防疫重点：马立克、新城疫+传支首免。';
+    else if (avgAge <= 140) advice += '\n• <b>育成期管理：</b>温度18-24°C，湿度50-70%，光照8-10小时/天，控制体重防止过肥。防疫重点：禽流感H5+H7加强免疫。';
+    else advice += '\n• <b>成年期管理：</b>蛋鸡保持16小时光照，肉鸡注意育肥管理。防疫重点：定期抗体监测。';
+  } else if (hasLayer) {
+    if (avgAge <= 42) { stage='育雏期 (0-6周)'; advice='• <b>温度：</b>第1周33-35°C，之后每周降2-3°C至20-22°C\n• <b>湿度：</b>60-70%\n• <b>光照：</b>第1周24h，之后每周减2h至自然光照\n• <b>饲料：</b>粗蛋白≥19%，代谢能≥11.9MJ/kg\n• <b>防疫：</b>马立克(1日龄)→新城疫+传支(7日龄)→法氏囊(14日龄)→禽流感H5+H7(15-21日龄)\n• <b>密度：</b>30-40只/m²'; }
+    else if (avgAge <= 140) { stage='育成期 (7-20周)'; advice='• <b>温度：</b>15-25°C\n• <b>湿度：</b>50-70%\n• <b>光照：</b>8-10h/天（控制性成熟）\n• <b>饲料：</b>粗蛋白14-16%，控制体重\n• <b>防疫：</b>禽流感H5+H7加强(60日龄)→新城疫加强(60日龄)→鸡痘(25-35日龄)→减蛋综合征(120日龄)\n• <b>管理：</b>定期称重，均匀度≥80%'; }
+    else { stage='产蛋期 (21-72周)'; advice='• <b>温度：</b>15-28°C（理想21-25°C）\n• <b>湿度：</b>50-70%\n• <b>光照：</b>16h/天（逐渐从育成期增加）\n• <b>饲料：</b>粗蛋白16-18%，钙3.5-4%\n• <b>防疫：</b>ND+IB每8-10周加强一次\n• <b>管理：</b>定期消毒，观察产蛋率变化，淘汰低产鸡\n• <b>淘汰标准：</b>500日龄或产蛋率<60%时考虑淘汰'; }
+  } else {
+    if (avgAge <= 14) { stage='育雏期 (0-2周)'; advice='• <b>温度：</b>33-35°C起步，每周降2-3°C\n• <b>湿度：</b>60-70%\n• <b>光照：</b>23-24h/天\n• <b>饲料：</b>肉小鸡料，粗蛋白≥21%\n• <b>防疫：</b>马立克(1日龄)→新城疫+传支(7日龄)\n• <b>密度：</b>30-40只/m²'; }
+    else if (avgAge <= 28) { stage='生长期 (3-4周)'; advice='• <b>温度：</b>22-28°C\n• <b>湿度：</b>55-65%\n• <b>光照：</b>18-20h/天\n• <b>饲料：</b>肉中鸡料，粗蛋白19-20%\n• <b>防疫：</b>法氏囊(14日龄)→禽流感H5+H7(15-21日龄)\n• <b>管理：</b>注意通风，预防呼吸道疾病'; }
+    else { stage='育肥期 (5周-出栏)'; advice='• <b>温度：</b>20-26°C\n• <b>湿度：</b>50-65%\n• <b>光照：</b>16-18h/天或自然\n• <b>饲料：</b>肉大鸡料，粗蛋白17-19%，高能量\n• <b>防疫：</b>出栏前7-10天停药\n• <b>出栏标准：</b>体重达标+日龄达标→系统自动高亮提示可卖鸡\n• <b>管理：</b>减少应激，保证充足采食饮水'; }
+  }
+  return {stage, advice, stats};
+}
+
+// ==================== UI 更新 ====================
+function updateHeader() {
+  const alive = state.chickens.filter(c=>c.status==='alive');
+  document.getElementById('hdr-total').textContent = alive.length;
+  document.getElementById('hdr-eggs').textContent = state.eggStock;
+  document.getElementById('hdr-feed').textContent = state.feedStock.toFixed(1);
+  document.getElementById('hdr-water').textContent = state.waterStock.toFixed(1);
+  document.getElementById('hdr-money').textContent = state.money.toFixed(2);
+}
+
+function updateChickenTable(filterBreed='all', filterStatus='all', filterSearch='') {
+  const tbody = document.getElementById('chicken-table-body');
+  let list = [...state.chickens];
+
+  if (filterBreed !== 'all') list = list.filter(c=>c.breed===filterBreed);
+  if (filterStatus === 'alive') list = list.filter(c=>c.status==='alive');
+  else if (filterStatus === 'sold') list = list.filter(c=>c.status==='sold');
+  else if (filterStatus === 'dead') list = list.filter(c=>c.status==='dead');
+  else if (filterStatus === 'sell-ready') list = list.filter(c=>c.status==='alive' && isSellReady(c));
+  if (filterSearch) list = list.filter(c=>c.id.toLowerCase().includes(filterSearch.toLowerCase()));
+
+  // 更新「已选」计数和全选复选框
+  const filteredIds = new Set(list.map(c=>c.id));
+  const actualSelected = state.selectedIds.filter(id=>filteredIds.has(id));
+  document.getElementById('selected-count').textContent = actualSelected.length;
+  const selectAll = document.getElementById('select-all-chickens');
+  if (selectAll) {
+    selectAll.checked = list.length > 0 && actualSelected.length === list.length;
+    selectAll.indeterminate = actualSelected.length > 0 && actualSelected.length < list.length;
+  }
+
+  tbody.innerHTML = list.map(c => {
+    const breed = getBreed(c.breed);
+    const age = getAgeDays(c);
+    const weight = estimateWeight(c);
+    const sellReady = isSellReady(c);
+    const eggTotal = c.eggRecords ? c.eggRecords.reduce((s,r)=>s+r.count,0) : 0;
+    const vaccCount = c.vaccines ? c.vaccines.length : 0;
+    const vaccDue = c.vaccines ? c.vaccines.filter(v=>v.nextDate && new Date(v.nextDate) <= new Date()).length : 0;
+    const sellDate = breed ? new Date(new Date(c.introDate).getTime() + (breed.maturityDays - c.introAge)*86400000).toLocaleDateString('zh-CN') : '-';
+    const statusLabel = c.status==='alive' ? (sellReady?'<span class="badge badge-warn pulse">可出栏</span>':'<span class="badge badge-success">存活</span>') :
+      c.status==='sold' ? '<span class="badge badge-info">已售</span>' : '<span class="badge badge-danger">死亡</span>';
+    const rowClass = sellReady && c.status==='alive' ? 'sell-ready' : '';
+    const checked = state.selectedIds.includes(c.id) ? 'checked' : '';
+    return `<tr class="${rowClass}" style="cursor:pointer;">
+      <td style="text-align:center;" onclick="event.stopPropagation();App.toggleChickenSelect('${c.id}')"><input type="checkbox" ${checked} onclick="event.stopPropagation();App.toggleChickenSelect('${c.id}')"></td>
+      <td onclick="App.showChickenDetail('${c.id}')"><strong>${c.id}</strong></td>
+      <td onclick="App.showChickenDetail('${c.id}')">${breed?.name||c.breed}</td>
+      <td onclick="App.showChickenDetail('${c.id}')">${age}天</td>
+      <td onclick="App.showChickenDetail('${c.id}')">${weight.toFixed(3)}</td>
+      <td onclick="App.showChickenDetail('${c.id}')">${statusLabel}${vaccDue>0?` <span class="badge badge-danger">疫苗逾期${vaccDue}</span>`:''}</td>
+      <td onclick="App.showChickenDetail('${c.id}')">${breed?.type==='layer'?eggTotal:'-'}/-</td>
+      <td onclick="App.showChickenDetail('${c.id}')">${vaccCount}次</td>
+      <td onclick="App.showChickenDetail('${c.id}')">${sellDate}</td>
+      <td><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();App.showChickenDetail('${c.id}')"><i class="fas fa-eye"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+function isSellReady(chicken) {
+  if (chicken.status !== 'alive') return false;
+  const breed = getBreed(chicken.breed);
+  if (!breed) return false;
+  const age = getAgeDays(chicken);
+  const weight = estimateWeight(chicken);
+  // 出栏标准：日龄达标 或 体重达标
+  if (breed.type === 'meat') {
+    return age >= breed.maturityDays || weight >= breed.targetWeight * 0.95;
+  }
+  // 蛋鸡淘汰：达到淘汰日龄
+  return age >= breed.maturityDays * 0.95;
+}
+
+function updateStageAdvice() {
+  const {stage, advice, stats} = getStageAdvice();
+  document.getElementById('stage-advice').innerHTML = `
+    <div style="margin-bottom:4px;"><strong>当前阶段：</strong>${stage} | <strong>平均日龄：</strong>${stats.avgAge||0}天 | <strong>存栏：</strong>${stats.count}只</div>
+    <div style="white-space:pre-line;font-size:.88em;line-height:1.5;">${advice}</div>
+  `;
+}
+
+function updateMarketTable() {
+  const tbody = document.getElementById('market-table-body');
+  if (Object.keys(state.marketData).length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);">点击"刷新行情"获取最新数据</td></tr>';
+    return;
+  }
+  const rows = [];
+  const prevPrices = Storage.get('prevPrices', {});
+  Object.keys(state.marketData).forEach(k => {
+    if (k.startsWith('_')) return;
+    const md = state.marketData[k];
+    const prev = prevPrices[k];
+    const trend = (v,prevV) => {
+      if (!prevV) return '';
+      const ch = v-prevV;
+      if (Math.abs(ch)<0.01) return '<span style="color:#888;">→</span>';
+      return ch>0 ? `<span style="color:#e63946;">↑${ch.toFixed(2)}</span>` : `<span style="color:#2a9d8f;">↓${Math.abs(ch).toFixed(2)}</span>`;
+    };
+    rows.push(`<tr>
+      <td><strong>${md.name}</strong></td><td>${md.category}</td>
+      <td>${md.chick?md.chick.toFixed(2)+' 元/只':'-'}</td>
+      <td>${md.毛鸡?md.毛鸡.toFixed(2)+' 元/kg':'-'}</td>
+      <td>${md.蛋?md.蛋.toFixed(2)+' 元/kg':'-'}</td>
+      <td>${md.chick?md.chick.toFixed(2)+' 元/只':'-'}</td>
+      <td>${trend(md.毛鸡||md.蛋, prev?.毛鸡||prev?.蛋)}</td>
+    </tr>`);
+  });
+  // 饲料价格行
+  if (state.marketData._feedPrice) {
+    rows.push(`<tr style="background:var(--bg);"><td colspan="2"><strong>饲料 (配合料)</strong></td><td colspan="4">${state.marketData._feedPrice.toFixed(2)} 元/kg</td><td></td></tr>`);
+  }
+  tbody.innerHTML = rows.join('');
+  document.getElementById('market-update-time').textContent = state.marketData._updateTime ?
+    ('更新于: '+state.marketData._updateTime + (state.marketData._source ? ' | '+state.marketData._source : '')) : '';
+}
+
+function updateFeedDisplay() {
+  document.getElementById('feed-stock').textContent = state.feedStock.toFixed(1);
+  document.getElementById('water-stock').textContent = state.waterStock.toFixed(1);
+  const alive = state.chickens.filter(c=>c.status==='alive');
+  const totalDailyFeed = alive.reduce((s,c)=>s+getDailyFeedIntake(c), 0);
+  document.getElementById('feed-rate').textContent = (totalDailyFeed * alive.length / 1000).toFixed(1);
+  document.getElementById('toggle-auto-feed').checked = state.settings.autoFeed;
+}
+
+function updateEggChart() {
+  const ctx = document.getElementById('chart-eggs');
+  if (!ctx) return;
+  // 构建近30天产蛋数据
+  const dailyEggs = {};
+  const today = new Date();
+  for (let i=29; i>=0; i--) {
+    const d = new Date(today - i*86400000).toISOString().slice(0,10);
+    dailyEggs[d] = 0;
+  }
+  state.chickens.forEach(c => {
+    if (c.eggRecords) {
+      c.eggRecords.forEach(r => {
+        if (dailyEggs.hasOwnProperty(r.date)) dailyEggs[r.date] += r.count;
+      });
+    }
+  });
+  const labels = Object.keys(dailyEggs).map(d=>d.slice(5));
+  const data = Object.values(dailyEggs);
+
+  if (window._eggChart) window._eggChart.destroy();
+  window._eggChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{label:'日产蛋量(枚)', data, borderColor:'#e76f51', backgroundColor:'rgba(231,111,81,.1)', fill:true, tension:.3, pointRadius:1}]
+    },
+    options: {responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true, title:{display:true, text:'枚'}}}
+    }
+  });
+}
+
+function updateBreedDistChart() {
+  const ctx = document.getElementById('chart-breed-dist');
+  if (!ctx) return;
+  const alive = state.chickens.filter(c=>c.status==='alive');
+  const dist = {};
+  alive.forEach(c=>{const b=getBreed(c.breed);const n=b?b.name:c.breed;dist[n]=(dist[n]||0)+1;});
+  const labels = Object.keys(dist);
+  const data = Object.values(dist);
+  const colors = ['#2d6a4f','#40916c','#52b788','#74c69d','#95d5b2','#b7e4c7','#e76f51','#f4a261'];
+
+  if (window._breedChart) window._breedChart.destroy();
+  window._breedChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {labels, datasets:[{data, backgroundColor:colors.slice(0,labels.length)}]},
+    options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom'}}}
+  });
+}
+
+function updateSellList() {
+  const div = document.getElementById('sell-list');
+  if (!div) return;
+  const ready = state.chickens.filter(c => c.status === 'alive' && isSellReady(c));
+  if (ready.length === 0) {
+    div.innerHTML = '<p style="color:var(--text2);">当前无达标可售鸡只。</p>';
+    return;
+  }
+  div.innerHTML = '<div class="table-wrap"><table><thead><tr><th>编号</th><th>品种</th><th>日龄</th><th>体重(kg)</th><th>预估售价</th></tr></thead><tbody>' +
+    ready.map(c => {
+      const breed = getBreed(c.breed);
+      const weight = estimateWeight(c);
+      const price = state.marketData[c.breed]?.毛鸡 || breed?.毛鸡Price || 8;
+      const revenue = (price * weight).toFixed(2);
+      return `<tr><td>${c.id}</td><td>${breed?.name||c.breed}</td><td>${getAgeDays(c)}天</td><td>${weight.toFixed(3)}</td><td>¥${revenue}</td></tr>`;
+    }).join('') + '</tbody></table></div>';
+}
+
+function updateDeathStats() {
+  const now = new Date();
+  const weekAgo = new Date(now - 7*86400000);
+  const monthAgo = new Date(now - 30*86400000);
+  const weekDeaths = state.deaths.filter(d=>new Date(d.date)>=weekAgo).length;
+  const monthDeaths = state.deaths.filter(d=>new Date(d.date)>=monthAgo).length;
+  const alive = state.chickens.filter(c=>c.status==='alive').length;
+  const totalStock = alive + state.deaths.length;
+
+  document.getElementById('stat-week-death').textContent = weekDeaths;
+  document.getElementById('stat-month-death').textContent = monthDeaths;
+  document.getElementById('stat-total-death').textContent = state.deaths.length;
+  document.getElementById('stat-death-rate').textContent = totalStock>0 ? (weekDeaths/(alive+weekDeaths)*100).toFixed(2)+'%' : '0%';
+
+  // 死亡表格
+  const tbody = document.getElementById('death-table-body');
+  tbody.innerHTML = state.deaths.slice(-20).reverse().map(d=>`<tr>
+    <td>${d.date}</td><td>${d.chickenId}</td><td>${d.reason}</td><td>${d.weight||'-'}kg</td>
+  </tr>`).join('');
+
+  // 鸡蛋销售记录
+  const esBody = document.getElementById('egg-sales-body');
+  esBody.innerHTML = state.eggSales.slice(-20).reverse().map(s=>`<tr>
+    <td>${s.date}</td><td>${s.count}</td><td>${s.unitPrice.toFixed(2)}</td><td>${s.total.toFixed(2)}</td>
+  </tr>`).join('');
+}
+
+function updateWeatherUI() {
+  const city = Storage.get('selectedCity', '');
+  const weather = state.weatherCache[city];
+  if (!weather) {
+    document.getElementById('weather-current').innerHTML = '<p style="color:var(--text2);">请选择城市查看天气</p>';
+    document.getElementById('weather-city-name').textContent = '';
+    document.getElementById('weather-forecast').innerHTML = '';
+    document.getElementById('weather-advice-card').style.display = 'none';
+    return;
+  }
+  document.getElementById('weather-city-name').textContent = `— ${city}`;
+  document.getElementById('weather-current').innerHTML = `
+    <div style="font-size:3em;text-align:center;">${weather.icon}</div>
+    <div style="text-align:center;font-size:1.5em;font-weight:700;">${weather.temp}°C</div>
+    <div style="text-align:center;">${weather.condition} | 湿度${weather.humidity}%</div>
+    <div style="text-align:center;font-size:.85em;color:var(--text2);">${weather.windDir} ${weather.windSpeed}m/s | ${weather.updateTime}</div>
+    <div style="text-align:center;font-size:.72em;color:var(--primary);margin-top:4px;">${weather.source||''} ${weather._fallbackNote?'('+weather._fallbackNote+')':''}</div>
+  `;
+  document.getElementById('weather-forecast').innerHTML = weather.forecast.map(f=>`
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2em;">${f.icon}</div>
+      <div>${f.date}</div>
+      <div><strong>${f.tempHigh}°</strong> / ${f.tempLow}°</div>
+      <div>${f.condition}</div>
+    </div>
+  `).join('');
+
+  const advices = getWeatherAdvice(weather);
+  document.getElementById('weather-advice').innerHTML = advices.map(a=>`<div class="alert alert-${a.level}">${a.text}</div>`).join('');
+  document.getElementById('weather-advice-card').style.display = 'block';
+}
+
+// ==================== 大棚监测 (多温室) ====================
+let _ghCounter = 0;
+function ghNextId() { return 'gh_' + (++_ghCounter).toString().padStart(3,'0'); }
+
+function addGreenhouse(name) {
+  const gh = {
+    id: ghNextId(),
+    name: name || ('大棚 ' + (state.greenhouses.length + 1)),
+    sensorHistory: [],
+    tempMin: state.settings.tempMin, tempMax: state.settings.tempMax,
+    humMin: state.settings.humMin, humMax: state.settings.humMax,
+    simEnabled: true
+  };
+  // 预填充过去24小时模拟数据
+  for (let i=23; i>=0; i--) {
+    gh.sensorHistory.push({
+      temp: 24 + (Math.random()-0.5)*4,
+      humidity: 55 + (Math.random()-0.5)*20,
+      time: Date.now() - i*3600000
+    });
+  }
+  state.greenhouses.push(gh);
+  saveAll();
+  renderGreenhouses();
+  updateSensorChart();
+  addAlert('info', '🌱 ' + gh.name + ' 已添加');
+}
+
+function removeGreenhouse(id) {
+  if (state.greenhouses.length <= 1) { alert('至少保留 1 个大棚。'); return; }
+  const gh = state.greenhouses.find(g=>g.id===id);
+  if (!gh) return;
+  if (!confirm('确定要删除 「' + gh.name + '」 及其全部传感器数据吗？')) return;
+  state.greenhouses = state.greenhouses.filter(g=>g.id!==id);
+  saveAll();
+  renderGreenhouses();
+  updateSensorChart();
+  addAlert('info', '🗑️ 已删除 ' + gh.name);
+}
+
+function renameGreenhouse(id, newName) {
+  const gh = state.greenhouses.find(g=>g.id===id);
+  if (!gh || !newName.trim()) return;
+  gh.name = newName.trim();
+  saveAll();
+  document.getElementById('gh-count').textContent = state.greenhouses.length;
+}
+
+function toggleGreenhouseSim(id) {
+  const gh = state.greenhouses.find(g=>g.id===id);
+  if (!gh) return;
+  gh.simEnabled = !gh.simEnabled;
+  saveAll();
+}
+
+function renderGreenhouses() {
+  const container = document.getElementById('greenhouse-cards');
+  const countEl = document.getElementById('gh-count');
+  const selectEl = document.getElementById('chart-gh-select');
+  if (!container) return;
+  countEl.textContent = state.greenhouses.length;
+
+  container.innerHTML = state.greenhouses.map(gh => {
+    const simChecked = gh.simEnabled ? 'checked' : '';
+    return '<div class="card" id="gh-card-' + gh.id + '">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+        '<h3 style="flex:1;">' +
+          '<input type="text" value="' + gh.name + '" onchange="App.renameGreenhouse(\'' + gh.id + '\',this.value)"' +
+                 ' style="border:none;background:none;font:inherit;color:var(--primary);font-weight:700;min-width:120px;width:auto;padding:2px 0;">' +
+        '</h3>' +
+        '<div style="display:flex;gap:6px;align-items:center;">' +
+          '<span style="font-size:.78em;color:var(--text2);">模拟</span>' +
+          '<label class="toggle"><input type="checkbox" ' + simChecked + ' onchange="App.toggleGreenhouseSim(\'' + gh.id + '\')"><span class="slider"></span></label>' +
+          '<button class="btn btn-sm btn-danger" onclick="App.removeGreenhouse(\'' + gh.id + '\')" title="删除大棚"><i class="fas fa-trash"></i></button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="quick-stats" style="margin:8px 0;">' +
+        '<div class="quick-stat"><div class="num" id="gh-temp-' + gh.id + '" style="font-size:1.6em;">--°C</div><div class="label">温度</div></div>' +
+        '<div class="quick-stat"><div class="num" id="gh-hum-' + gh.id + '" style="font-size:1.6em;">--%</div><div class="label">湿度</div></div>' +
+      '</div>' +
+      '<div id="gh-alert-' + gh.id + '" style="margin-top:6px;"></div>' +
+      '<details style="margin-top:8px;">' +
+        '<summary style="cursor:pointer;font-size:.85em;color:var(--text2);">⚙ 阈值设置</summary>' +
+        '<div class="form-row" style="margin-top:8px;">' +
+          '<div class="form-group"><label>最低温度 °C</label><input type="number" id="gh-tmin-' + gh.id + '" value="' + gh.tempMin + '" onchange="App.updateGhThresholds(\'' + gh.id + '\')"></div>' +
+          '<div class="form-group"><label>最高温度 °C</label><input type="number" id="gh-tmax-' + gh.id + '" value="' + gh.tempMax + '" onchange="App.updateGhThresholds(\'' + gh.id + '\')"></div>' +
+          '<div class="form-group"><label>最低湿度 %</label><input type="number" id="gh-hmin-' + gh.id + '" value="' + gh.humMin + '" onchange="App.updateGhThresholds(\'' + gh.id + '\')"></div>' +
+          '<div class="form-group"><label>最高湿度 %</label><input type="number" id="gh-hmax-' + gh.id + '" value="' + gh.humMax + '" onchange="App.updateGhThresholds(\'' + gh.id + '\')"></div>' +
+        '</div>' +
+      '</details>' +
+    '</div>';
+  }).join('');
+
+  // 更新图表下拉
+  selectEl.innerHTML = state.greenhouses.map(gh => '<option value="' + gh.id + '">' + gh.name + '</option>').join('');
+  if (state.greenhouses.length > 0) selectEl.value = state.greenhouses[0].id;
+
+  // 更新所有温室传感器数据
+  updateAllGreenhouseSensors();
+}
+
+function updateAllGreenhouseSensors() {
+  state.greenhouses.forEach(gh => {
+    const tempEl = document.getElementById('gh-temp-'+gh.id);
+    const humEl = document.getElementById('gh-hum-'+gh.id);
+    const alertEl = document.getElementById('gh-alert-'+gh.id);
+    if (!tempEl || !humEl || !alertEl) return;
+    if (gh.sensorHistory.length === 0) {
+      tempEl.textContent = '--°C'; humEl.textContent = '--%';
+      alertEl.innerHTML = '<div class="alert alert-info">⏳ 等待传感器数据...</div>';
+      return;
+    }
+    const latest = gh.sensorHistory[gh.sensorHistory.length-1];
+    tempEl.textContent = latest.temp.toFixed(1) + '°C';
+    humEl.textContent = latest.humidity.toFixed(0) + '%';
+    let alerts = '';
+    if (latest.temp > gh.tempMax) alerts += '<div class="alert alert-danger">🔴 温度过高 ' + latest.temp.toFixed(1) + '°C (阈值: ≤' + gh.tempMax + '°C) — 建议：开启湿帘/风机降温，喷雾降温，增加饮水。</div>';
+    else if (latest.temp < gh.tempMin) alerts += '<div class="alert alert-danger">🔵 温度过低 ' + latest.temp.toFixed(1) + '°C (阈值: ≥' + gh.tempMin + '°C) — 建议：开启供暖，减少通风，检查保温。</div>';
+    if (latest.humidity > gh.humMax) alerts += '<div class="alert alert-warn">🟡 湿度过高 ' + latest.humidity.toFixed(0) + '% (阈值: ≤' + gh.humMax + '%) — 建议：加强通风，检查饮水器是否漏水。</div>';
+    else if (latest.humidity < gh.humMin) alerts += '<div class="alert alert-warn">🟠 湿度过低 ' + latest.humidity.toFixed(0) + '% (阈值: ≥' + gh.humMin + '%) — 建议：喷雾增湿。</div>';
+    if (!alerts) alerts = '<div class="alert alert-success">✅ 温湿度正常</div>';
+    alertEl.innerHTML = alerts;
+  });
+}
+
+function updateSensorUI() {
+  renderGreenhouses();
+  updateSensorChart();
+}
+
+function updateSensorChart() {
+  const ctx = document.getElementById('chart-sensor');
+  const selectEl = document.getElementById('chart-gh-select');
+  if (!ctx || !selectEl) return;
+  const ghId = selectEl.value;
+  const gh = state.greenhouses.find(g=>g.id===ghId);
+  if (!gh) return;
+  const cutoff = Date.now() - 86400000;
+  const recent = gh.sensorHistory.filter(s=>s.time>=cutoff);
+  const labels = recent.map(s=>new Date(s.time).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}));
+  const tempData = recent.map(s=>s.temp);
+  const humData = recent.map(s=>s.humidity);
+  if (window._sensorChart) window._sensorChart.destroy();
+  window._sensorChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {label:'温度 °C', data:tempData, borderColor:'#e63946', tension:.3, pointRadius:0, yAxisID:'y'},
+        {label:'湿度 %', data:humData, borderColor:'#457b9d', tension:.3, pointRadius:0, yAxisID:'y1'},
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        y:{type:'linear',position:'left',title:{display:true,text:'°C'},min:0,max:40},
+        y1:{type:'linear',position:'right',title:{display:true,text:'%'},min:0,max:100,grid:{drawOnChartArea:false}}
+      },
+      plugins:{legend:{position:'bottom'}}
+    }
+  });
+}
+
+function updateAutoTasks() {
+  const tbody = document.getElementById('auto-tasks-body');
+  const tasks = [
+    {name:'自动喂食/喂水', key:'autoFeed', interval:`${state.settings.feedInterval}分钟(食)/${state.settings.waterInterval}分钟(水)`,
+      next: (state.settings.feedInterval*60000 - (Date.now()-state.lastFeedTime))/1000},
+    {name:'自动收集鸡蛋', key:'autoEggs', interval:'每1小时',
+      next: (3600000 - (Date.now()-state.lastEggTime))/1000},
+    {name:'自动刷新行情', key:'autoMarket', interval:'每1小时',
+      next: (3600000 - (Date.now()-state.lastMarketTime))/1000},
+    {name:'自动天气刷新', key:'autoWeather', interval:'每30分钟',
+      next: (1800000 - (Date.now()-state.lastWeatherTime))/1000},
+    {name:'传感器模拟', key:'autoSensor', interval:'每5秒',
+      next: 5},
+  ];
+  tbody.innerHTML = tasks.map(t=>{
+    const nextSec = Math.max(0, Math.round(t.next));
+    const nextStr = t.name.includes('传感器') ? '实时' :
+      nextSec > 3600 ? `${Math.floor(nextSec/3600)}h${Math.floor((nextSec%3600)/60)}m` :
+      nextSec > 60 ? `${Math.floor(nextSec/60)}m${nextSec%60}s` : `${nextSec}s`;
+    return `<tr>
+      <td><strong>${t.name}</strong></td>
+      <td><span class="badge ${state.settings[t.key]?'badge-success':'badge-danger'}">${state.settings[t.key]?'运行中':'已关闭'}</span></td>
+      <td>${t.interval}</td>
+      <td><span class="countdown">${nextStr}</span></td>
+      <td><label class="toggle"><input type="checkbox" ${state.settings[t.key]?'checked':''} onchange="App.toggleAuto('${t.key.replace('auto','').toLowerCase()}')"><span class="slider"></span></label></td>
+    </tr>`;
+  }).join('');
+
+  // 告警日志
+  document.getElementById('alert-log').innerHTML = state.alertLog.slice(0,30).map(a=>`
+    <div class="alert alert-${a.type}" style="margin:4px 0;font-size:.82em;">[${a.time}] ${a.message}</div>
+  `).join('') || '<p style="color:var(--text2);">暂无告警</p>';
+}
+
+// ==================== 筛选下拉框 ====================
+function updateFilterDropdowns() {
+  const breedSelect = document.getElementById('filter-breed');
+  const breeds = [...new Set(state.chickens.map(c=>c.breed))];
+  breedSelect.innerHTML = '<option value="all">全部品种</option>' +
+    breeds.map(b=>`<option value="${b}">${getBreed(b)?.name||b}</option>`).join('');
+
+  // 买入品种下拉
+  const buyBreed = document.getElementById('buy-breed');
+  const batchBuyBreed = document.getElementById('batch-buy-breed');
+  const addBreed = document.getElementById('add-breed');
+  const breedOptions = Object.keys(BREEDS).map(k=>`<option value="${k}">${BREEDS[k].name} (${BREEDS[k].type==='meat'?'肉鸡':'蛋鸡'})</option>`).join('');
+  if (buyBreed) buyBreed.innerHTML = breedOptions;
+  if (batchBuyBreed) batchBuyBreed.innerHTML = breedOptions;
+  if (addBreed) addBreed.innerHTML = breedOptions;
+
+  // 死亡鸡只下拉
+  const deathSelect = document.getElementById('death-chicken-id');
+  const alive = state.chickens.filter(c=>c.status==='alive');
+  deathSelect.innerHTML = alive.map(c=>`<option value="${c.id}">${c.id} - ${getBreed(c.breed)?.name||c.breed}</option>`).join('');
+
+  // 疫苗目标
+  const vaccTarget = document.getElementById('vaccine-target');
+  if (vaccTarget) {
+    vaccTarget.onchange = function() {
+      document.getElementById('vaccine-age-range').disabled = this.value !== 'range';
+    };
+  }
+  document.getElementById('vaccine-date').value = new Date().toISOString().slice(0,10);
+}
+
+// ==================== 城市下拉 ====================
+function initCityDropdowns() {
+  const provSelect = document.getElementById('weather-province');
+  provSelect.innerHTML = '<option value="">请选择省份</option>' +
+    CHINA_CITIES.map(p=>`<option value="${p.province}">${p.province}</option>`).join('');
+}
+
+// ==================== 模态框 ====================
+function showModal(id) {
+  document.getElementById(id).classList.add('show');
+  if (id === 'modal-record-death') {
+    document.getElementById('death-date').value = new Date().toISOString().slice(0,10);
+    updateFilterDropdowns();
+  }
+  if (id === 'modal-add-vaccine-batch') {
+    document.getElementById('vaccine-date').value = new Date().toISOString().slice(0,10);
+  }
+  if (id === 'modal-sell-eggs') {
+    document.getElementById('sell-eggs-stock').textContent = state.eggStock;
+    const eggPrice = getEggMarketPrice();
+    document.getElementById('sell-eggs-price').textContent = eggPrice.toFixed(2);
+    document.getElementById('sell-eggs-per-piece').textContent = (eggPrice/16).toFixed(3);
+    document.getElementById('sell-eggs-count').value = state.eggStock;
+  }
+  if (id === 'modal-feed-settings') {
+    document.getElementById('feed-interval').value = state.settings.feedInterval;
+    document.getElementById('feed-amount').value = state.settings.feedAmount;
+    document.getElementById('water-interval').value = state.settings.waterInterval;
+    document.getElementById('water-amount').value = state.settings.waterAmount;
+  }
+}
+
+function hideModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+function getEggMarketPrice() {
+  // 从行情数据获取鸡蛋价格
+  const layers = ['hyline-brown','hyline-gray','jinghong1','jingfen1'];
+  for (const k of layers) {
+    if (state.marketData[k]?.蛋) return state.marketData[k].蛋;
+  }
+  return 9.8; // 默认
+}
+
+// ==================== 操作函数 ====================
+
+function addChicken() {
+  const breed = document.getElementById('add-breed').value;
+  const age = parseInt(document.getElementById('add-age').value) || 1;
+  const weight = parseFloat(document.getElementById('add-weight').value) || 0.04;
+  const count = parseInt(document.getElementById('add-count').value) || 1;
+  const note = document.getElementById('add-note').value;
+
+  const breedData = getBreed(breed);
+  const totalCost = (breedData?.chickPrice || 3.5) * count;
+  if (state.money < totalCost) {
+    alert(`资金不足！需要 ${totalCost.toFixed(2)} 元，当前余额 ${state.money.toFixed(2)} 元。`);
+    return;
+  }
+
+  for (let i=0; i<count; i++) {
+    const id = generateId();
+    const now = new Date();
+    state.chickens.push({
+      id, breed, introDate: now.toISOString().slice(0,10),
+      introAge: age, initialWeight: weight, weight: weight,
+      status: 'alive', note,
+      vaccines: [],
+      eggRecords: [],
+      weightRecords: [{date: now.toISOString().slice(0,10), weight}],
+    });
+  }
+  state.money = Math.round((state.money - totalCost) * 100) / 100;
+  addAlert('success', `✅ 成功引入 ${count} 只${breedData?.name||breed}，花费 ${totalCost.toFixed(2)} 元。`);
+  hideModal('modal-add-chicken');
+  saveAll();
+  refreshAll();
+}
+
+function batchBuyChicks() {
+  const breed = document.getElementById('batch-buy-breed').value;
+  const count = parseInt(document.getElementById('batch-buy-count').value) || 100;
+  const price = parseFloat(document.getElementById('batch-buy-price').value) || 3.5;
+  const age = parseInt(document.getElementById('batch-buy-age').value) || 1;
+  const breedData = getBreed(breed);
+  const totalCost = price * count;
+  if (state.money < totalCost) {
+    alert(`资金不足！需要 ${totalCost.toFixed(2)} 元，当前余额 ${state.money.toFixed(2)} 元。`);
+    return;
+  }
+  for (let i=0; i<count; i++) {
+    const id = generateId();
+    state.chickens.push({
+      id, breed, introDate: new Date().toISOString().slice(0,10),
+      introAge: age, initialWeight: 0.04, weight: 0.04,
+      status: 'alive', note: `批量购入 #${Math.floor(count/100)}`,
+      vaccines: [],
+      eggRecords: [],
+      weightRecords: [{date: new Date().toISOString().slice(0,10), weight: 0.04}],
+    });
+  }
+  state.money = Math.round((state.money - totalCost) * 100) / 100;
+  addAlert('success', `✅ 批量购入 ${count} 只${breedData?.name||breed}鸡苗，花费 ${totalCost.toFixed(2)} 元。`);
+  hideModal('modal-batch-buy');
+  saveAll();
+  refreshAll();
+}
+
+function sellReadyChickens() {
+  const ready = state.chickens.filter(c=>c.status==='alive' && isSellReady(c));
+  if (ready.length === 0) {
+    alert('当前没有达到出栏/淘汰标准的鸡只。');
+    return;
+  }
+  let totalRevenue = 0;
+  ready.forEach(c => {
+    const breed = getBreed(c.breed);
+    const weight = estimateWeight(c);
+    const price = state.marketData[c.breed]?.毛鸡 || breed?.毛鸡Price || 8;
+    const revenue = price * weight;
+    totalRevenue += revenue;
+    c.status = 'sold';
+    c.sellDate = new Date().toISOString().slice(0,10);
+    c.sellPrice = price;
+    c.sellWeight = weight;
+    c.sellRevenue = revenue;
+  });
+  state.money = Math.round((state.money + totalRevenue) * 100) / 100;
+  addAlert('success', `💰 成功卖出 ${ready.length} 只鸡，收益 ${totalRevenue.toFixed(2)} 元。`);
+  saveAll();
+  refreshAll();
+}
+
+// ==================== 全选 / 批量操作 ====================
+function toggleSelectAll() {
+  const checkbox = document.getElementById('select-all-chickens');
+  const filterBreed = document.getElementById('filter-breed')?.value || 'all';
+  const filterStatus = document.getElementById('filter-status')?.value || 'all';
+  const filterSearch = document.getElementById('filter-search')?.value || '';
+
+  let list = [...state.chickens];
+  if (filterBreed !== 'all') list = list.filter(c=>c.breed===filterBreed);
+  if (filterStatus === 'alive') list = list.filter(c=>c.status==='alive');
+  else if (filterStatus === 'sold') list = list.filter(c=>c.status==='sold');
+  else if (filterStatus === 'dead') list = list.filter(c=>c.status==='dead');
+  else if (filterStatus === 'sell-ready') list = list.filter(c=>c.status==='alive' && isSellReady(c));
+  if (filterSearch) list = list.filter(c=>c.id.toLowerCase().includes(filterSearch.toLowerCase()));
+
+  if (checkbox.checked) {
+    list.forEach(c => { if (!state.selectedIds.includes(c.id)) state.selectedIds.push(c.id); });
+  } else {
+    const filteredIds = new Set(list.map(c=>c.id));
+    state.selectedIds = state.selectedIds.filter(id=>!filteredIds.has(id));
+  }
+  saveAll();
+  updateChickenTable(filterBreed, filterStatus, filterSearch);
+}
+
+function toggleChickenSelect(id) {
+  const idx = state.selectedIds.indexOf(id);
+  if (idx >= 0) state.selectedIds.splice(idx, 1);
+  else state.selectedIds.push(id);
+  saveAll();
+  // 只更新计数和复选框状态，不重建表格
+  const filteredIds = new Set(
+    [...state.chickens].filter(c=>{
+      const fb = document.getElementById('filter-breed')?.value||'all';
+      const fs = document.getElementById('filter-status')?.value||'all';
+      const fss = document.getElementById('filter-search')?.value||'';
+      if (fb!=='all'&&c.breed!==fb) return false;
+      if (fs==='alive'&&c.status!=='alive') return false;
+      if (fs==='sold'&&c.status!=='sold') return false;
+      if (fs==='dead'&&c.status!=='dead') return false;
+      if (fs==='sell-ready'&&!(c.status==='alive'&&isSellReady(c))) return false;
+      if (fss&&!c.id.toLowerCase().includes(fss.toLowerCase())) return false;
+      return true;
+    }).map(c=>c.id)
+  );
+  const actualSelected = state.selectedIds.filter(id=>filteredIds.has(id));
+  document.getElementById('selected-count').textContent = actualSelected.length;
+  const selectAll = document.getElementById('select-all-chickens');
+  if (selectAll) {
+    selectAll.checked = filteredIds.size > 0 && actualSelected.length === filteredIds.size;
+    selectAll.indeterminate = actualSelected.length > 0 && actualSelected.length < filteredIds.size;
+  }
+}
+
+function clearAllChickens() {
+  if (!confirm('确定要清除全部鸡只库存吗？此操作不可撤销！所有鸡只数据将被永久删除。\n\n⚠️ 已售出和已死亡的数据也将一并清除。')) return;
+  if (state.chickens.length === 0) { alert('鸡舍已空，没有可清除的鸡只。'); return; }
+  const count = state.chickens.length;
+  state.chickens = [];
+  state.selectedIds = [];
+  state.eggSales = [];
+  state.deaths = [];
+  state.vaccines = [];
+  saveAll();
+  document.getElementById('selected-count').textContent = '0';
+  const selectAll = document.getElementById('select-all-chickens');
+  if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
+  App.renderChickenTable();
+  App.updateMetrics();
+  alert('已清除全部 ' + count + ' 只鸡的记录。');
+  logAlert('info', '系统', '已清除全部 ' + count + ' 只鸡的库存记录。');
+}
+
+function batchSellSelected() {
+  if (state.selectedIds.length === 0) { alert('请先在列表中勾选要卖出的鸡只。'); return; }
+  const targets = state.chickens.filter(c=>state.selectedIds.includes(c.id)&&c.status==='alive');
+  if (targets.length === 0) { alert('所选鸡只中无存活状态的鸡。'); return; }
+  const count = targets.length;
+  const countReady = targets.filter(c=>isSellReady(c)).length;
+  const msg = countReady < count
+    ? `共选中 ${count} 只活鸡（其中 ${countReady} 只达标，${count-countReady} 只未达标）。\n确定全部卖出？（未达标鸡将按当前体重出售）`
+    : `确定卖出 ${count} 只鸡吗？`;
+  if (!confirm(msg)) return;
+  let totalRevenue = 0;
+  targets.forEach(c => {
+    const breed = getBreed(c.breed);
+    const weight = estimateWeight(c);
+    const price = state.marketData[c.breed]?.毛鸡 || breed?.毛鸡Price || 8;
+    totalRevenue += price * weight;
+    c.status = 'sold';
+    c.sellDate = new Date().toISOString().slice(0,10);
+    c.sellPrice = price;
+    c.sellWeight = weight;
+    c.sellRevenue = price * weight;
+  });
+  state.money = Math.round((state.money + totalRevenue) * 100) / 100;
+  state.selectedIds = state.selectedIds.filter(id=>!targets.some(t=>t.id===id));
+  addAlert('success', `💰 批量卖出 ${targets.length} 只鸡，收益 ${totalRevenue.toFixed(2)} 元。`);
+  saveAll();
+  refreshAll();
+}
+
+function batchKillSelected() {
+  if (state.selectedIds.length === 0) { alert('请先在列表中勾选要记录死亡的鸡只。'); return; }
+  const targets = state.chickens.filter(c=>state.selectedIds.includes(c.id)&&c.status==='alive');
+  if (targets.length === 0) { alert('所选鸡只中无存活状态的鸡。'); return; }
+  const reason = prompt('死亡原因：', '疾病');
+  if (!reason) return;
+  const date = new Date().toISOString().slice(0,10);
+  targets.forEach(c => {
+    c.status = 'dead';
+    c.deathDate = date;
+    c.deathReason = reason;
+    state.deaths.push({chickenId: c.id, date, reason, weight: estimateWeight(c), note: '批量记录'});
+  });
+  state.selectedIds = state.selectedIds.filter(id=>!targets.some(t=>t.id===id));
+  addAlert('danger', `💀 批量记录 ${targets.length} 只鸡死亡（${reason}）。`);
+  saveAll();
+  refreshAll();
+}
+
+function batchVaccinateSelected() {
+  if (state.selectedIds.length === 0) { alert('请先在列表中勾选要免疫的鸡只。'); return; }
+  const targets = state.chickens.filter(c=>state.selectedIds.includes(c.id)&&c.status==='alive');
+  if (targets.length === 0) { alert('所选鸡只中无存活状态的鸡。'); return; }
+  const vaccineNames = ['马立克疫苗','新城疫疫苗 (ND)','传支疫苗 (IB)','禽流感H5+H7疫苗','法氏囊疫苗 (IBD)','鸡痘疫苗','禽流感H9疫苗','支原体疫苗','传喉疫苗 (ILT)','减蛋综合征疫苗 (EDS)'];
+  const name = prompt('疫苗名称：\n' + vaccineNames.map((v,i)=>(i+1)+'. '+v).join('\n'), '新城疫疫苗 (ND)');
+  if (!name) return;
+  const date = prompt('接种日期：', new Date().toISOString().slice(0,10));
+  if (!date) return;
+  const sched = VACCINE_SCHEDULE.find(v=>name.includes(v.name.split(' ')[0]));
+  const interval = sched?.interval || null;
+  targets.forEach(c => {
+    c.vaccines = c.vaccines || [];
+    c.vaccines.push({name, date, nextDate: interval ? new Date(new Date(date).getTime()+interval*86400000).toISOString().slice(0,10) : null});
+  });
+  addAlert('info', `💉 已为 ${targets.length} 只鸡记录 ${name} 免疫。`);
+  saveAll();
+  refreshAll();
+}
+
+function recordDeath() {
+  const chickenId = document.getElementById('death-chicken-id').value;
+  const date = document.getElementById('death-date').value;
+  const reason = document.getElementById('death-reason').value;
+  const weight = parseFloat(document.getElementById('death-weight').value) || 0;
+  const note = document.getElementById('death-note').value;
+
+  const chicken = getChickenById(chickenId);
+  if (!chicken) return alert('未找到该鸡只。');
+  chicken.status = 'dead';
+  chicken.deathDate = date;
+  chicken.deathReason = reason;
+  chicken.deathWeight = weight;
+  chicken.deathNote = note;
+
+  state.deaths.push({chickenId, date, reason, weight, note});
+  addAlert('danger', `💀 记录死亡: ${chickenId} (${reason})`);
+
+  hideModal('modal-record-death');
+  saveAll();
+  refreshAll();
+}
+
+function addBatchVaccine() {
+  const target = document.getElementById('vaccine-target').value;
+  const ageRange = document.getElementById('vaccine-age-range').value;
+  const vaccineName = document.getElementById('vaccine-name').value;
+  const vaccDate = document.getElementById('vaccine-date').value;
+
+  let targets = [];
+  if (target === 'all') {
+    targets = state.chickens.filter(c=>c.status==='alive');
+  } else if (target === 'range' && ageRange) {
+    const [min,max] = ageRange.split('-').map(Number);
+    targets = state.chickens.filter(c=>c.status==='alive' && getAgeDays(c)>=min && getAgeDays(c)<=max);
+  }
+
+  // 查找疫苗程序中的推荐间隔
+  const sched = VACCINE_SCHEDULE.find(v=>vaccineName.includes(v.name.split(' ')[0]));
+  const interval = sched?.interval || null;
+
+  targets.forEach(c => {
+    c.vaccines = c.vaccines || [];
+    c.vaccines.push({
+      name: vaccineName,
+      date: vaccDate,
+      nextDate: interval ? new Date(new Date(vaccDate).getTime()+interval*86400000).toISOString().slice(0,10) : null,
+    });
+  });
+
+  addAlert('info', `💉 已为 ${targets.length} 只鸡记录 ${vaccineName} 免疫。`);
+  hideModal('modal-add-vaccine-batch');
+  saveAll();
+  refreshAll();
+}
+
+function addVaccineForChicken() {
+  const detailId = document.getElementById('detail-id').textContent;
+  const chicken = getChickenById(detailId);
+  if (!chicken) return;
+  const name = prompt('疫苗名称:', '新城疫疫苗 (ND)');
+  const date = prompt('接种日期:', new Date().toISOString().slice(0,10));
+  if (!name || !date) return;
+  chicken.vaccines = chicken.vaccines || [];
+  const sched = VACCINE_SCHEDULE.find(v=>name.includes(v.name.split(' ')[0]));
+  const interval = sched?.interval || null;
+  chicken.vaccines.push({
+    name, date,
+    nextDate: interval ? new Date(new Date(date).getTime()+interval*86400000).toISOString().slice(0,10) : null,
+  });
+  addAlert('info', `💉 ${detailId} 已记录 ${name} 免疫。`);
+  saveAll();
+  showChickenDetail(detailId);
+}
+
+function showChickenDetail(id) {
+  const chicken = getChickenById(id);
+  if (!chicken) return;
+  const breed = getBreed(chicken.breed);
+  const age = getAgeDays(chicken);
+  const weight = estimateWeight(chicken);
+  const eggTotal = chicken.eggRecords ? chicken.eggRecords.reduce((s,r)=>s+r.count,0) : 0;
+  const layingDays = Math.max(0, age - (breed?.eggStartDay||999));
+  const eggRate = breed?.type==='layer' ? (getEggRate(chicken)*100).toFixed(1)+'%' : 'N/A';
+
+  document.getElementById('detail-id').textContent = chicken.id;
+  document.getElementById('detail-breed').textContent = breed?.name||chicken.breed;
+  document.getElementById('detail-age').textContent = age;
+  document.getElementById('detail-weight').textContent = weight.toFixed(3);
+  document.getElementById('detail-status').textContent = chicken.status==='alive'?'存活':chicken.status==='sold'?'已售':'死亡';
+  document.getElementById('detail-intro-date').textContent = chicken.introDate;
+  document.getElementById('detail-sell-date').textContent = breed ? new Date(new Date(chicken.introDate).getTime()+(breed.maturityDays-chicken.introAge)*86400000).toLocaleDateString('zh-CN') : '-';
+  document.getElementById('detail-total-eggs').textContent = eggTotal;
+  document.getElementById('detail-egg-rate').textContent = eggRate;
+  document.getElementById('detail-feed-intake').textContent = getDailyFeedIntake(chicken);
+
+  // 疫苗
+  const vaccTbody = document.getElementById('detail-vaccines');
+  vaccTbody.innerHTML = (chicken.vaccines||[]).map(v=>`<tr>
+    <td>${v.name}</td><td>${v.date}</td><td>${v.nextDate||'-'}</td>
+    <td><button class="btn btn-sm btn-danger" onclick="App.deleteVaccine('${chicken.id}','${v.date}','${v.name}')"><i class="fas fa-trash"></i></button></td>
+  </tr>`).join('') || '<tr><td colspan="4">暂无疫苗记录</td></tr>';
+
+  // 产蛋记录
+  const eggTbody = document.getElementById('detail-egg-records');
+  const recentEggs = (chicken.eggRecords||[]).slice(-7).reverse();
+  eggTbody.innerHTML = recentEggs.map(r=>`<tr><td>${r.date}</td><td>${r.count}</td></tr>`).join('') || '<tr><td colspan="2">暂无产蛋记录</td></tr>';
+
+  // 体重曲线
+  const weightCtx = document.getElementById('chart-chicken-weight');
+  if (window._weightChart) window._weightChart.destroy();
+  const wr = chicken.weightRecords || [];
+  window._weightChart = new Chart(weightCtx, {
+    type: 'line',
+    data: {
+      labels: wr.map(r=>r.date.slice(5)),
+      datasets: [{label:'体重 (kg)', data:wr.map(r=>r.weight), borderColor:'#2d6a4f', tension:.3, fill:false}]
+    },
+    options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}}
+  });
+
+  showModal('modal-chicken-detail');
+}
+
+function deleteVaccine(chickenId, date, name) {
+  const chicken = getChickenById(chickenId);
+  if (!chicken) return;
+  chicken.vaccines = chicken.vaccines.filter(v=>!(v.date===date && v.name===name));
+  saveAll();
+  showChickenDetail(chickenId);
+}
+
+function deleteChicken() {
+  const id = document.getElementById('detail-id').textContent;
+  if (!confirm(`确定要删除 ${id} 的所有记录吗？此操作不可恢复！`)) return;
+  state.chickens = state.chickens.filter(c=>c.id!==id);
+  state.deaths = state.deaths.filter(d=>d.chickenId!==id);
+  hideModal('modal-chicken-detail');
+  saveAll();
+  refreshAll();
+}
+
+function addFeed() {
+  state.feedStock += 100;
+  addAlert('info', `➕ 补充饲料 100kg，当前库存 ${state.feedStock.toFixed(1)}kg`);
+  saveAll();
+  refreshAll();
+}
+
+function addWater() {
+  state.waterStock += 200;
+  addAlert('info', `➕ 补充饮水 200L，当前库存 ${state.waterStock.toFixed(1)}L`);
+  saveAll();
+  refreshAll();
+}
+
+function clearFeedWater() {
+  if (!confirm('确定将饲料和水库存清零？\n饲料 → 0kg，水 → 0L')) return;
+  state.feedStock = 0;
+  state.waterStock = 0;
+  addAlert('info', '🔄 饲料与水库存已清零');
+  saveAll();
+  refreshAll();
+}
+
+function sellEggs() {
+  const count = parseInt(document.getElementById('sell-eggs-count').value) || 0;
+  if (count <= 0 || count > state.eggStock) return alert('数量无效。');
+  const pricePerKg = getEggMarketPrice();
+  const weightPerEgg = 0.06; // 约60g/枚
+  const totalKg = count * weightPerEgg;
+  const totalPrice = totalKg * pricePerKg;
+  state.eggStock -= count;
+  state.money = Math.round((state.money + totalPrice) * 100) / 100;
+  state.eggSales.push({date: new Date().toISOString().slice(0,10), count, unitPrice: pricePerKg, total: totalPrice});
+  addAlert('success', `🥚 出售 ${count} 枚鸡蛋 (${totalKg.toFixed(1)}kg)，收入 ${totalPrice.toFixed(2)} 元。`);
+  hideModal('modal-sell-eggs');
+  saveAll();
+  refreshAll();
+}
+
+function saveFeedSettings() {
+  state.settings.feedInterval = parseInt(document.getElementById('feed-interval').value) || 60;
+  state.settings.feedAmount = parseInt(document.getElementById('feed-amount').value) || 15;
+  state.settings.waterInterval = parseInt(document.getElementById('water-interval').value) || 30;
+  state.settings.waterAmount = parseInt(document.getElementById('water-amount').value) || 30;
+  hideModal('modal-feed-settings');
+  saveAll();
+  refreshAll();
+}
+
+function updateGhThresholds(id) {
+  const gh = state.greenhouses.find(g=>g.id===id);
+  if (!gh) return;
+  gh.tempMin = parseInt(document.getElementById('gh-tmin-'+id).value) || 10;
+  gh.tempMax = parseInt(document.getElementById('gh-tmax-'+id).value) || 30;
+  gh.humMin = parseInt(document.getElementById('gh-hmin-'+id).value) || 40;
+  gh.humMax = parseInt(document.getElementById('gh-hmax-'+id).value) || 80;
+  saveAll();
+  updateAllGreenhouseSensors();
+}
+
+async function refreshMarket() {
+  try {
+    state.marketData = await fetchMarketData();
+  } catch(e) {
+    state.marketData = getMarketDataSync();
+    addAlert('warn', `行情API获取失败: ${e.message}，使用模拟数据。`);
+  }
+  state.marketLastUpdate = new Date().toLocaleString('zh-CN');
+  state.lastMarketTime = Date.now();
+  checkPriceAlerts();
+  saveAll();
+  updateMarketTable();
+  addAlert('info', '📊 行情数据已刷新。' + (state.marketData._source ? ` 来源: ${state.marketData._source}` : ''));
+}
+
+function updateCities() {
+  const prov = document.getElementById('weather-province').value;
+  const citySelect = document.getElementById('weather-city');
+  citySelect.innerHTML = '<option value="">请选择城市</option>';
+  const provData = CHINA_CITIES.find(p=>p.province===prov);
+  if (provData) {
+    citySelect.innerHTML += provData.cities.map(c=>`<option value="${c}">${c}</option>`).join('');
+  }
+}
+
+function searchCities() {
+  const q = document.getElementById('weather-search').value.trim();
+  const resultsDiv = document.getElementById('city-search-results');
+  if (q.length < 1) { resultsDiv.innerHTML=''; return; }
+  const matches = [];
+  CHINA_CITIES.forEach(p=>{
+    p.cities.forEach(c=>{
+      if (c.includes(q) || q.includes(c)) matches.push({city:c, province:p.province});
+    });
+  });
+  resultsDiv.innerHTML = matches.slice(0,20).map(m=>
+    `<div style="padding:6px 10px;cursor:pointer;border-bottom:1px solid var(--border);" onclick="App.selectCity('${m.city}')">
+      ${m.city} — ${m.province}
+    </div>`
+  ).join('');
+}
+
+async function selectCity(city) {
+  Storage.set('selectedCity', city);
+  document.getElementById('weather-search').value = city;
+  document.getElementById('city-search-results').innerHTML = '';
+  // 显示加载状态
+  document.getElementById('weather-current').innerHTML = '<p style="color:var(--text2);">⏳ 正在获取天气数据...</p>';
+  try {
+    const weather = await fetchWeather(city);
+    state.weatherCache[city] = weather;
+    Storage.set('weatherCache', state.weatherCache);
+    state.lastWeatherTime = Date.now();
+    saveAll();
+    updateWeatherUI();
+    const sourceTag = weather.source || '模拟数据';
+    addAlert('info', `🌤️ 已更新 ${city} 天气数据 (来源: ${sourceTag})`);
+  } catch(e) {
+    document.getElementById('weather-current').innerHTML = `<p style="color:var(--danger);">❌ 获取天气失败: ${e.message}</p>`;
+    addAlert('danger', `天气获取失败: ${e.message}`);
+  }
+}
+
+async function updateWeather() {
+  const city = document.getElementById('weather-city').value;
+  if (!city) return;
+  await selectCity(city);
+}
+
+function toggleAuto(type) {
+  const keyMap = {feed:'autoFeed', eggs:'autoEggs', market:'autoMarket', weather:'autoWeather', sensor:'autoSensor'};
+  const key = keyMap[type];
+  if (!key) return;
+  state.settings[key] = !state.settings[key];
+  const labelMap = {feed:'自动喂食', eggs:'自动收集鸡蛋', market:'自动刷新行情', weather:'自动天气刷新', sensor:'传感器模拟'};
+  addAlert('info', `${state.settings[key]?'✅ 已开启':'⏸️ 已关闭'} ${labelMap[type]}`);
+  saveAll();
+  refreshAll();
+}
+
+function refreshAll() {
+  updateHeader();
+  updateChickenTable(
+    document.getElementById('filter-breed')?.value || 'all',
+    document.getElementById('filter-status')?.value || 'all',
+    document.getElementById('filter-search')?.value || ''
+  );
+  updateStageAdvice();
+  updateMarketTable();
+  updateSellList();
+  updateFeedDisplay();
+  updateDeathStats();
+  updateEggChart();
+  updateBreedDistChart();
+  updateWeatherUI();
+  updateSensorUI();
+  updateAutoTasks();
+  updateFilterDropdowns();
+}
+
+function filterChickens() {
+  const breed = document.getElementById('filter-breed').value;
+  const status = document.getElementById('filter-status').value;
+  const search = document.getElementById('filter-search').value;
+  updateChickenTable(breed, status, search);
+}
+
+function toggleTheme() {
+  state.settings.theme = state.settings.theme==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme', state.settings.theme);
+  const icon = document.querySelector('.theme-btn i');
+  icon.className = state.settings.theme==='dark' ? 'fas fa-sun' : 'fas fa-moon';
+  saveAll();
+}
+
+function savePriceAlertSettings() {
+  state.settings.priceDropThreshold = parseInt(document.getElementById('price-drop-threshold').value) || 5;
+  state.settings.priceRiseThreshold = parseInt(document.getElementById('price-rise-threshold').value) || 10;
+  hideModal('modal-price-alert');
+  saveAll();
+}
+
+function saveAPISettings() {
+  state.settings.apiQWeatherKey = document.getElementById('api-qweather-key').value;
+  state.settings.apiJuheKey = document.getElementById('api-juhe-key').value;
+  state.settings.apiMarketUrl = document.getElementById('api-market-url').value;
+  hideModal('modal-api-settings');
+  saveAll();
+}
+
+// ==================== 清除记录 ====================
+function clearRecords(type) {
+  const confirmMap = {
+    alerts: '确定要清空所有告警记录吗？',
+    deaths: '确定要清空所有死亡记录吗？（鸡只状态不会恢复）',
+    eggSales: '确定要清空所有鸡蛋销售记录吗？',
+    sensor: '确定要清空传感器历史数据吗？',
+    marketCache: '确定要清空行情缓存吗？（将使用模拟数据）',
+    weatherCache: '确定要清空天气缓存吗？',
+    all: '⚠️ 确定要重置全部数据吗？\n\n这将清空：告警、死亡记录、销售记录、传感器历史、行情缓存、天气缓存。\n\n鸡只、库存、资金、设置保留。\n\n此操作不可恢复！',
+  };
+  if (!confirm(confirmMap[type] || '确定吗？')) return;
+
+  switch (type) {
+    case 'alerts':
+      state.alertLog = [];
+      addAlert('info', '🗑️ 告警记录已清空');
+      break;
+    case 'deaths':
+      state.deaths = [];
+      addAlert('info', '🗑️ 死亡记录已清空');
+      break;
+    case 'eggSales':
+      state.eggSales = [];
+      addAlert('info', '🗑️ 鸡蛋销售记录已清空');
+      break;
+    case 'sensor':
+      state.greenhouses.forEach(gh => { gh.sensorHistory = []; });
+      addAlert('info', '🗑️ 所有大棚传感器历史数据已清空');
+      break;
+    case 'marketCache':
+      state.marketData = {};
+      state.marketLastUpdate = '';
+      state.lastMarketTime = 0;
+      Storage.set('prevPrices', {});
+      addAlert('info', '🗑️ 行情缓存已清空，下次刷新将重新获取');
+      break;
+    case 'weatherCache':
+      state.weatherCache = {};
+      state.lastWeatherTime = 0;
+      Storage.set('weatherCache', {});
+      addAlert('info', '🗑️ 天气缓存已清空');
+      break;
+    case 'all':
+      state.alertLog = [];
+      state.deaths = [];
+      state.eggSales = [];
+      state.greenhouses.forEach(gh => { gh.sensorHistory = []; });
+      state.marketData = {};
+      state.marketLastUpdate = '';
+      state.lastMarketTime = 0;
+      state.weatherCache = {};
+      state.lastWeatherTime = 0;
+      Storage.set('prevPrices', {});
+      Storage.set('weatherCache', {});
+      addAlert('info', '🗑️ 所有记录已清空（鸡只、库存、资金、设置保留）');
+      break;
+  }
+  saveAll();
+  refreshAll();
+}
+
+// ==================== 初始化 ====================
+function init() {
+  try {
+  // 主题
+  if (state.settings.theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.querySelector('.theme-btn i').className = 'fas fa-sun';
+  }
+
+  // Tab 切换
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+      this.classList.add('active');
+      document.getElementById(this.dataset.tab).classList.add('active');
+      refreshAll();
+    });
+  });
+
+  // 关闭模态框 (点击遮罩)
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('show');
+    });
+  });
+
+  // 模态框内取消按钮
+  document.querySelectorAll('.modal-overlay .btn-outline').forEach(btn => {
+    btn.addEventListener('click', function() {
+      this.closest('.modal-overlay').classList.remove('show');
+    });
+  });
+
+  // 初始化行情 (首次加载 — 同步版本先展示，后台异步拉取真实数据)
+  if (Object.keys(state.marketData).length === 0) {
+    state.marketData = getMarketDataSync();
+    state.marketLastUpdate = new Date().toLocaleString('zh-CN');
+    // 后台异步拉取真实行情
+    (async () => {
+      try {
+        state.marketData = await fetchMarketData();
+        state.marketLastUpdate = new Date().toLocaleString('zh-CN');
+        state.lastMarketTime = Date.now();
+        checkPriceAlerts();
+        saveAll();
+        updateMarketTable();
+      } catch(e) { /* 静默失败，已显示模拟数据 */ }
+    })();
+  }
+  // 确保 prevPrices 有初始值
+  if (!Storage.get('prevPrices')) {
+    const prices = {};
+    Object.keys(state.marketData).forEach(k => { if (!k.startsWith('_')) prices[k] = {...state.marketData[k]}; });
+    Storage.set('prevPrices', prices);
+  }
+
+  // 迁移旧版传感器数据 → 多温室结构
+  const oldSensorData = Storage.get('sensorHistory', null);
+  if (oldSensorData && Array.isArray(oldSensorData) && oldSensorData.length > 0 && state.greenhouses.length === 0) {
+    const gh = {
+      id: ghNextId(),
+      name: '大棚 1',
+      sensorHistory: oldSensorData,
+      tempMin: state.settings.tempMin, tempMax: state.settings.tempMax,
+      humMin: state.settings.humMin, humMax: state.settings.humMax,
+      simEnabled: state.settings.autoSensor
+    };
+    state.greenhouses.push(gh);
+    localStorage.removeItem('cfp_sensorHistory');
+    saveAll();
+  }
+  // 确保至少有一个大棚
+  if (state.greenhouses.length === 0) {
+    _ghCounter = 0;
+    const gh = {
+      id: ghNextId(),
+      name: '大棚 1',
+      sensorHistory: [],
+      tempMin: state.settings.tempMin, tempMax: state.settings.tempMax,
+      humMin: state.settings.humMin, humMax: state.settings.humMax,
+      simEnabled: true
+    };
+    for (let i=23; i>=0; i--) {
+      gh.sensorHistory.push({
+        temp: 24 + (Math.random()-0.5)*4,
+        humidity: 55 + (Math.random()-0.5)*20,
+        time: Date.now() - i*3600000
+      });
+    }
+    state.greenhouses.push(gh);
+    saveAll();
+  }
+  _ghCounter = state.greenhouses.length;
+
+  // 初始化城市下拉
+  initCityDropdowns();
+
+  // 恢复选中的城市天气 — 同步展示缓存，后台异步拉取最新
+  const savedCity = Storage.get('selectedCity', '');
+  if (savedCity) {
+    document.getElementById('weather-search').value = savedCity;
+    // 有缓存先展示缓存
+    if (state.weatherCache[savedCity]) {
+      updateWeatherUI();
+    }
+    // 后台异步拉取最新天气 (API优先)
+    (async () => {
+      if (!state.weatherCache[savedCity] || Date.now() - state.lastWeatherTime > 1800000) {
+        try {
+          state.weatherCache[savedCity] = await fetchWeather(savedCity);
+          state.lastWeatherTime = Date.now();
+          saveAll();
+          updateWeatherUI();
+        } catch(e) { /* 静默失败 */ }
+      }
+    })();
+  }
+
+  // API 设置
+  document.getElementById('api-qweather-key').value = state.settings.apiQWeatherKey || '';
+  document.getElementById('api-juhe-key').value = state.settings.apiJuheKey || '';
+  document.getElementById('api-market-url').value = state.settings.apiMarketUrl || '';
+
+  // 价格预警阈值
+  document.getElementById('price-drop-threshold').value = state.settings.priceDropThreshold;
+  document.getElementById('price-rise-threshold').value = state.settings.priceRiseThreshold;
+
+  // 切换开关初始状态
+  document.getElementById('toggle-auto-feed').checked = state.settings.autoFeed;
+
+  // 初次渲染
+  refreshAll();
+
+  // ===== 主循环 (每秒) =====
+  setInterval(() => {
+    // 传感器模拟 (每5秒，遍历所有大棚)
+    state.greenhouses.forEach(gh => {
+      if (!gh.simEnabled) return;
+      if (Date.now() - (gh.sensorHistory.length>0?gh.sensorHistory[gh.sensorHistory.length-1].time:0) < 5000) return;
+      const reading = simulateSensorForGh(gh);
+      gh.sensorHistory.push(reading);
+      const cutoff = Date.now() - 86400000;
+      gh.sensorHistory = gh.sensorHistory.filter(s=>s.time>=cutoff);
+      if (gh.sensorHistory.length > 1000) gh.sensorHistory = gh.sensorHistory.slice(-1000);
+    });
+    updateSensorUI();
+
+    // 自动喂食/喂水检查
+    processAutoFeed();
+
+    // 自动产蛋
+    processAutoEggs();
+
+    // 自动行情 (fire-and-forget, non-blocking)
+    processAutoMarket().catch(()=>{});
+
+    // 自动天气 (每30分钟) — fire-and-forget
+    if (state.settings.autoWeather && Date.now()-state.lastWeatherTime >= 1800000) {
+      const city = Storage.get('selectedCity', '');
+      if (city) {
+        (async () => {
+          try {
+            state.weatherCache[city] = await fetchWeather(city);
+            state.lastWeatherTime = Date.now();
+            saveAll();
+            updateWeatherUI();
+          } catch(e) { /* 静默失败 */ }
+        })();
+      }
+    }
+
+    // 更新标头和自动化面板 (每秒)
+    updateHeader();
+    updateFeedDisplay();
+    updateAutoTasks();
+    saveAll();
+  }, 1000);
+
+  // 每天更新体重记录 (每10分钟检查)
+  setInterval(() => {
+    const today = new Date().toISOString().slice(0,10);
+    state.chickens.forEach(c => {
+      if (c.status !== 'alive') return;
+      c.weightRecords = c.weightRecords || [];
+      const todayRecord = c.weightRecords.find(r=>r.date===today);
+      const currentWeight = estimateWeight(c);
+      if (!todayRecord) {
+        c.weightRecords.push({date: today, weight: currentWeight});
+      } else {
+        todayRecord.weight = currentWeight;
+      }
+      c.weight = currentWeight;
+      // 清理旧记录
+      if (c.weightRecords.length > 100) c.weightRecords = c.weightRecords.slice(-100);
+    });
+    // 疫苗到期提醒
+    state.chickens.forEach(c => {
+      if (c.status !== 'alive' || !c.vaccines) return;
+      c.vaccines.forEach(v => {
+        if (v.nextDate && new Date(v.nextDate) <= new Date() && !v.reminded) {
+          addAlert('warn', `⚠️ ${c.id} 的 ${v.name} 加强免疫已到期 (${v.nextDate})，请尽快安排接种！`);
+          v.reminded = true;
+        }
+      });
+    });
+    saveAll();
+  }, 600000);
+
+  console.log('🐔 全自动化养鸡监测平台 v2.0 已启动');
+  console.log('📋 功能清单: 鸡群管理 | 行情交易 | 统计报表 | 天气预报 | 大棚监测 | 自动化');
+  console.log('💾 所有数据存储在浏览器 localStorage (cfp_* 键)');
+  console.log('🔌 API接口预留: 和风天气(devapi.qweather.com) | 聚合数据(juhe.cn) | 自定义行情API');
+  } catch(e) {
+    console.error('init() error:', e.message, e.stack);
+    alert('启动失败: ' + e.message);
+  }
+}
+
+// ==================== 暴露全局 API ====================
+window.App = {
+  showModal, hideModal,
+  addChicken, batchBuyChicks, buyChicks: batchBuyChicks,
+  sellReadyChickens, recordDeath,
+  addBatchVaccine, addVaccineForChicken, deleteVaccine, deleteChicken,
+  showChickenDetail,
+  addFeed, addWater, clearFeedWater, sellEggs,
+  saveFeedSettings, updateGhThresholds,
+  refreshMarket, toggleAuto,
+  updateCities, searchCities, selectCity, updateWeather,
+  filterChickens, toggleTheme,
+  savePriceAlertSettings, saveAPISettings,
+  toggleSelectAll, toggleChickenSelect, clearAllChickens,
+  batchSellSelected, batchKillSelected, batchVaccinateSelected,
+  clearRecords,
+  addGreenhouse, removeGreenhouse, renameGreenhouse, toggleGreenhouseSim,
+  updateSensorChart,
+  refreshAll,
+};
+
+// 启动
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
