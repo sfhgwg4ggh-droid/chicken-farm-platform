@@ -154,7 +154,8 @@ tr:hover { background:rgba(45,106,79,.04); }
   <button class="tab-btn" data-tab="tab-stats"><i class="fas fa-chart-bar"></i>统计报表</button>
   <button class="tab-btn" data-tab="tab-weather"><i class="fas fa-cloud-sun"></i>天气预报</button>
   <button class="tab-btn" data-tab="tab-sensors"><i class="fas fa-thermometer-half"></i>大棚监测</button>
-  <button class="tab-btn" data-tab="tab-auto"><i class="fas fa-cogs"></i>自动化</button>
+  <button class="tab-btn" data-tab="tab-monitor"><i class="fas fa-satellite-dish"></i>监控通道</button>
+	  <button class="tab-btn" data-tab="tab-auto"><i class="fas fa-cogs"></i>自动化</button>
 </nav>
 
 <!-- ===== TAB 1: 鸡群管理 ===== -->
@@ -330,6 +331,52 @@ tr:hover { background:rgba(45,106,79,.04); }
       <select id="chart-gh-select" onchange="App.updateSensorChart()" style="margin-left:8px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);"></select>
     </h3>
     <canvas id="chart-sensor" height="220"></canvas>
+  </div>
+</div>
+
+<!-- ===== TAB 7: 监控通道 ===== -->
+<div class="tab-panel" id="tab-monitor">
+  <div class="card">
+    <h3><i class="fas fa-plug"></i>连接监控
+      <button class="btn btn-sm btn-primary" onclick="App.checkAllConnections()" style="margin-left:12px;"><i class="fas fa-sync-alt"></i>全部检测</button>
+      <span style="font-size:.75em;color:var(--text2);margin-left:8px;" id="conn-check-time"></span>
+    </h3>
+    <div class="grid3" id="connection-cards"></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3><i class="fas fa-wifi"></i>网络连通性 <button class="btn btn-sm btn-outline" onclick="App.pingTest()" style="margin-left:8px;"><i class="fas fa-paper-plane"></i>测速</button></h3>
+      <div id="ping-results" style="font-size:.88em;">
+        <p style="color:var(--text2);">点击测速按钮检测各API延迟...</p>
+      </div>
+      <canvas id="chart-latency" height="150" style="margin-top:8px;"></canvas>
+    </div>
+    <div class="card">
+      <h3><i class="fas fa-clock"></i>连接日志 <button class="btn btn-sm btn-outline" onclick="App.clearRecords('connLog')" style="margin-left:8px;"><i class="fas fa-eraser"></i>清空</button></h3>
+      <div id="conn-log" style="max-height:240px;overflow-y:auto;font-size:.82em;"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3><i class="fas fa-temperature-high"></i>室外气温检测
+      <button class="btn btn-sm btn-primary" onclick="App.addTempSensor()" style="margin-left:12px;"><i class="fas fa-plus"></i>添加测温点</button>
+      <button class="btn btn-sm btn-outline" onclick="App.refreshAllTempSensors()" style="margin-left:6px;"><i class="fas fa-sync-alt"></i>全部刷新</button>
+      <span style="font-size:.78em;color:var(--text2);margin-left:8px;">共 <strong id="temp-sensor-count">0</strong> 个测温点</span>
+    </h3>
+    <div class="grid3" id="temp-sensor-cards"></div>
+  </div>
+  <div class="card">
+    <h3><i class="fas fa-chart-line"></i>气温趋势 (近7天)
+      <select id="temp-chart-select" onchange="App.updateTempChart()" style="margin-left:8px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);"></select>
+    </h3>
+    <canvas id="chart-outdoor-temp" height="220"></canvas>
+  </div>
+  <div class="card">
+    <h3><i class="fas fa-exclamation-triangle"></i>气温预警阈值设置</h3>
+    <div class="form-row">
+      <div class="form-group"><label>高温预警 °C</label><input type="number" id="alert-temp-high" value="38" min="25" max="50" onchange="App.saveTempAlertSettings()"></div>
+      <div class="form-group"><label>低温预警 °C</label><input type="number" id="alert-temp-low" value="2" min="-20" max="15" onchange="App.saveTempAlertSettings()"></div>
+      <div class="form-group"><label>温度骤变预警 °C/h</label><input type="number" id="alert-temp-change" value="8" min="3" max="20" onchange="App.saveTempAlertSettings()"></div>
+    </div>
   </div>
 </div>
 
@@ -662,6 +709,10 @@ let state = {
   lastMarketTime: Storage.get('lastMarketTime', 0),
   lastWeatherTime: Storage.get('lastWeatherTime', 0),
   selectedIds: Storage.get('selectedIds', []),
+  tempSensors: Storage.get('tempSensors', []),
+  connLog: Storage.get('connLog', []),
+  connStatus: Storage.get('connStatus', {}),
+  tempAlertSettings: Storage.get('tempAlertSettings', {high:38, low:2, change:8}),
 };
 
 // 持久化辅助
@@ -684,6 +735,10 @@ function saveAll() {
   Storage.set('lastEggTime', state.lastEggTime);
   Storage.set('lastMarketTime', state.lastMarketTime);
   Storage.set('lastWeatherTime', state.lastWeatherTime);
+  Storage.set('tempSensors', state.tempSensors);
+  Storage.set('connLog', state.connLog);
+  Storage.set('connStatus', state.connStatus);
+  Storage.set('tempAlertSettings', state.tempAlertSettings);
   Storage.set('selectedIds', state.selectedIds);
 }
 
@@ -1697,6 +1752,277 @@ function updateSensorChart() {
   });
 }
 
+// ==================== 连接监控 ====================
+
+
+// ==================== 连接监控 ====================
+const CONN_SERVICES = [
+  {key:'openMeteo', name:'Open-Meteo 天气API', url:'https://api.open-meteo.com/', icon:'fa-cloud-sun'},
+  {key:'qweather', name:'和风天气 API', url:'https://devapi.qweather.com/', icon:'fa-cloud'},
+  {key:'juhe', name:'聚合数据 行情API', url:'https://apis.juhe.cn/', icon:'fa-chart-line'},
+  {key:'customApi', name:'自定义行情API', url:state.settings.apiMarketUrl||'(未配置)', icon:'fa-plug'},
+  {key:'localStorage', name:'本地存储 (localStorage)', url:'浏览器内置', icon:'fa-database'},
+  {key:'sensorSim', name:'传感器模拟引擎', url:'本地计算', icon:'fa-microchip'},
+];
+
+function checkConnection(service) {
+  return new Promise(resolve => {
+    if (service.key === 'localStorage') {
+      try { localStorage.setItem('_conn_test', '1'); localStorage.removeItem('_conn_test');
+        resolve({status:'ok', latency:1, msg:'读写正常'}); } catch(e) { resolve({status:'error', latency:-1, msg:e.message}); }
+    } else if (service.key === 'sensorSim') {
+      resolve({status:'ok', latency:0, msg:'模拟引擎运行中'});
+    } else if (service.key === 'customApi') {
+      if (!state.settings.apiMarketUrl) { resolve({status:'disabled', latency:-1, msg:'未配置API地址'}); return; }
+      const start = Date.now();
+      fetch(state.settings.apiMarketUrl, {method:'HEAD', signal:AbortSignal.timeout(5000), mode:'no-cors'})
+        .then(() => resolve({status:'ok', latency:Date.now()-start, msg:'可达'}))
+        .catch(e => resolve({status:'error', latency:Date.now()-start, msg:e.message}));
+    } else {
+      const start = Date.now();
+      fetch(service.url, {method:'HEAD', signal:AbortSignal.timeout(5000), mode:'no-cors'})
+        .then(() => resolve({status:'ok', latency:Date.now()-start, msg:'可达'}))
+        .catch(e => resolve({status:'error', latency:Date.now()-start, msg:e.message}));
+    }
+  });
+}
+
+async function checkAllConnections() {
+  const timeEl = document.getElementById('conn-check-time');
+  if (timeEl) timeEl.textContent = '⏳ 检测中...';
+  for (const svc of CONN_SERVICES) {
+    const result = await checkConnection(svc);
+    state.connStatus[svc.key] = {...result, lastCheck: Date.now()};
+    addConnLog(svc.name, result.status==='ok'?'success':result.status==='disabled'?'info':'danger',
+      (result.status==='ok'?('✅ 正常 ('+result.latency+'ms)') : result.status==='disabled'?('⏸️ '+result.msg):('❌ '+result.msg)));
+  }
+  if (timeEl) timeEl.textContent = '检测完成: '+new Date().toLocaleTimeString('zh-CN');
+  saveAll();
+  renderConnectionCards();
+}
+
+function renderConnectionCards() {
+  const container = document.getElementById('connection-cards');
+  if (!container) return;
+  container.innerHTML = CONN_SERVICES.map(svc => {
+    const st = state.connStatus[svc.key] || {};
+    const statusIcon = st.status==='ok'?'✅':st.status==='disabled'?'⏸️':'❌';
+    const statusColor = st.status==='ok'?'var(--success)':st.status==='disabled'?'var(--text2)':'var(--danger)';
+    const latencyStr = st.latency>=0 ? st.latency+'ms' : '—';
+    return ['<div class="card" style="text-align:center;padding:14px;">',
+      '<div style="font-size:2em;"><i class="fas ',svc.icon,'"></i></div>',
+      '<div style="font-weight:700;margin:6px 0;">',svc.name,'</div>',
+      '<div style="font-size:1.5em;color:',statusColor,';">',statusIcon,'</div>',
+      '<div style="font-size:.8em;color:var(--text2);">延迟: ',latencyStr,'</div>',
+      '<div style="font-size:.72em;color:var(--text2);margin-top:2px;">',(st.msg||''),'</div>',
+    '</div>'].join('');
+  }).join('');
+}
+
+function addConnLog(service, type, message) {
+  state.connLog.unshift({time: new Date().toLocaleString('zh-CN'), service, type, message});
+  if (state.connLog.length > 100) state.connLog.length = 100;
+  renderConnLog();
+}
+
+function renderConnLog() {
+  const el = document.getElementById('conn-log');
+  if (!el) return;
+  el.innerHTML = state.connLog.slice(0,30).map(l =>
+    '<div class="alert alert-'+l.type+'" style="margin:3px 0;font-size:.8em;padding:6px 10px;">['+l.time+'] <strong>'+l.service+'</strong>: '+l.message+'</div>'
+  ).join('') || '<p style="color:var(--text2);">暂无日志</p>';
+}
+
+async function pingTest() {
+  const results = [];
+  for (const svc of CONN_SERVICES) {
+    if (svc.key==='localStorage'||svc.key==='sensorSim') continue;
+    if (svc.key==='customApi'&&!state.settings.apiMarketUrl) continue;
+    const start = Date.now();
+    try {
+      await fetch(svc.url, {method:'HEAD', signal:AbortSignal.timeout(5000), mode:'no-cors'});
+      results.push({name:svc.name, latency:Date.now()-start});
+    } catch(e) {
+      results.push({name:svc.name, latency:-1});
+    }
+  }
+  document.getElementById('ping-results').innerHTML = results.map(r =>
+    '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">'+
+    '<span>'+r.name+'</span>'+
+    '<span style="color:'+(r.latency>0?(r.latency<300?'var(--success)':r.latency<800?'var(--warn)':'var(--danger)'):'var(--text2)')+';">'+
+    (r.latency>0?r.latency+'ms':'超时')+'</span></div>'
+  ).join('');
+  const ctx = document.getElementById('chart-latency');
+  if (window._latencyChart) window._latencyChart.destroy();
+  window._latencyChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: results.map(r=>r.name),
+      datasets: [{label:'延迟 (ms)', data:results.map(r=>Math.max(0,r.latency)),
+        backgroundColor: results.map(r=>r.latency<0?'#ccc':r.latency<300?'#2a9d8f':r.latency<800?'#f4a261':'#e63946')}]
+    },
+    options: {responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{legend:{display:false}},
+      scales:{x:{title:{display:true,text:'ms'}}}
+    }
+  });
+  addConnLog('网络测速','info','已完成各API延迟测试');
+  saveAll();
+}
+
+// ==================== 室外气温检测 ====================
+function addTempSensor(name) {
+  const sensor = {
+    id: 'ts_' + Date.now(),
+    name: name || ('测温点 '+(state.tempSensors.length+1)),
+    history: [],
+    simEnabled: true
+  };
+  for (let h=167; h>=0; h--) {
+    sensor.history.push({
+      temp: Math.round((22 + (Math.random()-0.5)*10 + 5*Math.sin(h/24*Math.PI)) * 10) / 10,
+      time: Date.now() - h*3600000
+    });
+  }
+  state.tempSensors.push(sensor);
+  addAlert('info', '🌡️ '+sensor.name+' 测温点已添加');
+  saveAll();
+  renderTempSensors();
+}
+
+function removeTempSensor(id) {
+  const ts = state.tempSensors.find(t=>t.id===id);
+  if (!ts) return;
+  if (!confirm('确定删除「'+ts.name+'」及其全部温度数据吗？')) return;
+  state.tempSensors = state.tempSensors.filter(t=>t.id!==id);
+  saveAll();
+  renderTempSensors();
+  addAlert('info', '🗑️ 已删除测温点: '+ts.name);
+}
+
+function renameTempSensor(id, newName) {
+  const ts = state.tempSensors.find(t=>t.id===id);
+  if (!ts||!newName.trim()) return;
+  ts.name = newName.trim();
+  saveAll();
+  renderTempSensors();
+}
+
+function refreshAllTempSensors() {
+  state.tempSensors.forEach(ts => {
+    if (!ts.simEnabled) return;
+    const last = ts.history.length>0 ? ts.history[ts.history.length-1].temp : 22;
+    ts.history.push({
+      temp: Math.round(Math.max(-15, Math.min(45, last + (Math.random()-0.5)*3)) * 10) / 10,
+      time: Date.now()
+    });
+    const cutoff = Date.now() - 7*86400000;
+    ts.history = ts.history.filter(h=>h.time>=cutoff);
+    if (ts.history.length > 200) ts.history = ts.history.slice(-200);
+  });
+  saveAll();
+  renderTempSensors();
+  updateTempChart();
+}
+
+function renderTempSensors() {
+  const container = document.getElementById('temp-sensor-cards');
+  const countEl = document.getElementById('temp-sensor-count');
+  const selectEl = document.getElementById('temp-chart-select');
+  if (!container) return;
+  if (countEl) countEl.textContent = state.tempSensors.length;
+
+  if (state.tempSensors.length === 0) {
+    container.innerHTML = '<div class="card" style="text-align:center;color:var(--text2);padding:24px;">'+
+      '<p style="font-size:2em;">🌡️</p><p>暂无测温点，点击上方「添加测温点」开始监测室外气温</p></div>';
+    if (selectEl) selectEl.innerHTML = '<option value="">请先添加测温点</option>';
+    return;
+  }
+
+  container.innerHTML = state.tempSensors.map(ts => {
+    const latest = ts.history.length>0 ? ts.history[ts.history.length-1] : null;
+    const temp = latest ? latest.temp.toFixed(1) : '--';
+    const tempClass = latest ? (latest.temp>=state.tempAlertSettings.high?'var(--danger)':latest.temp<=state.tempAlertSettings.low?'var(--primary)':'var(--success)') : 'var(--text2)';
+    const ah = state.tempAlertSettings.high;
+    const al = state.tempAlertSettings.low;
+    let alerts = '';
+    if (latest) {
+      if (latest.temp >= ah) alerts += '<div class="alert alert-danger" style="font-size:.78em;">🔴 高温预警: '+latest.temp.toFixed(1)+'°C (阈值≥'+ah+'°C)</div>';
+      else if (latest.temp <= al) alerts += '<div class="alert alert-danger" style="font-size:.78em;">🔵 低温预警: '+latest.temp.toFixed(1)+'°C (阈值≤'+al+'°C)</div>';
+      if (ts.history.length >= 2) {
+        const prev = ts.history[ts.history.length-2];
+        const hourDiff = (latest.time - prev.time) / 3600000;
+        if (hourDiff > 0) {
+          const rateOfChange = Math.abs(latest.temp - prev.temp) / hourDiff;
+          if (rateOfChange >= state.tempAlertSettings.change) {
+            alerts += '<div class="alert alert-warn" style="font-size:.78em;">⚠️ 温度骤变: '+rateOfChange.toFixed(1)+'°C/h</div>';
+          }
+        }
+      }
+    }
+    if (!alerts) alerts = '<div class="alert alert-success" style="font-size:.78em;">✅ 气温正常</div>';
+    return '<div class="card" style="text-align:center;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+        '<h3 style="flex:1;text-align:left;">'+
+          '<input type="text" value="'+ts.name+'" onchange="App.renameTempSensor(\''+ts.id+'\',this.value)" style="border:none;background:none;font:inherit;color:var(--primary);font-weight:700;min-width:100px;width:auto;padding:2px 0;">'+
+        '</h3>'+
+        '<button class="btn btn-sm btn-danger" onclick="App.removeTempSensor(\''+ts.id+'\')" title="删除测温点"><i class="fas fa-trash"></i></button>'+
+      '</div>'+
+      '<div style="font-size:2.5em;font-weight:700;color:'+tempClass+';margin:8px 0;">'+temp+'°C</div>'+
+      '<div style="font-size:.78em;color:var(--text2);">'+ (latest ? new Date(latest.time).toLocaleString('zh-CN') : '无数据') +'</div>'+
+      '<div style="margin-top:6px;">'+alerts+'</div>'+
+    '</div>';
+  }).join('');
+
+  if (selectEl) {
+    selectEl.innerHTML = state.tempSensors.map(ts => '<option value="'+ts.id+'">'+ts.name+'</option>').join('');
+    if (state.tempSensors.length > 0 && !selectEl.value) selectEl.value = state.tempSensors[0].id;
+  }
+}
+
+function updateTempChart() {
+  const ctx = document.getElementById('chart-outdoor-temp');
+  const selectEl = document.getElementById('temp-chart-select');
+  if (!ctx||!selectEl) return;
+  const tsId = selectEl.value;
+  const ts = state.tempSensors.find(t=>t.id===tsId);
+  if (!ts) return;
+  const cutoff = Date.now() - 7*86400000;
+  const data = ts.history.filter(h=>h.time>=cutoff);
+  const labels = data.map(h=>new Date(h.time).toLocaleDateString('zh-CN',{month:'short',day:'numeric'}));
+  const tempData = data.map(h=>h.temp);
+  if (window._outdoorTempChart) window._outdoorTempChart.destroy();
+  window._outdoorTempChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label:'室外温度 °C', data:tempData,
+        borderColor:'#e76f51', backgroundColor:'rgba(231,111,81,.08)', fill:true, tension:.3, pointRadius:0
+      }]
+    },
+    options: {responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{y:{title:{display:true,text:'°C'}}}
+    }
+  });
+}
+
+function saveTempAlertSettings() {
+  state.tempAlertSettings.high = parseInt(document.getElementById('alert-temp-high').value) || 38;
+  state.tempAlertSettings.low = parseInt(document.getElementById('alert-temp-low').value) || 2;
+  state.tempAlertSettings.change = parseInt(document.getElementById('alert-temp-change').value) || 8;
+  saveAll();
+  renderTempSensors();
+}
+
+function updateMonitorPanel() {
+  renderConnectionCards();
+  renderConnLog();
+  renderTempSensors();
+  updateTempChart();
+}
+
 function updateAutoTasks() {
   const tbody = document.getElementById('auto-tasks-body');
   const tasks = [
@@ -2346,6 +2672,7 @@ function refreshAll() {
   updateBreedDistChart();
   updateWeatherUI();
   updateSensorUI();
+  updateMonitorPanel();
   updateAutoTasks();
   updateFilterDropdowns();
 }
@@ -2422,6 +2749,11 @@ function clearRecords(type) {
       state.lastWeatherTime = 0;
       Storage.set('weatherCache', {});
       addAlert('info', '🗑️ 天气缓存已清空');
+      break;
+    case 'connLog':
+      state.connLog = [];
+      renderConnLog();
+      addAlert('info', '🗑️ 连接日志已清空');
       break;
     case 'all':
       state.alertLog = [];
@@ -2566,6 +2898,13 @@ function init() {
   document.getElementById('api-juhe-key').value = state.settings.apiJuheKey || '';
   document.getElementById('api-market-url').value = state.settings.apiMarketUrl || '';
 
+  // 气温预警阈值
+  if (document.getElementById('alert-temp-high')) {
+    document.getElementById('alert-temp-high').value = state.tempAlertSettings.high;
+    document.getElementById('alert-temp-low').value = state.tempAlertSettings.low;
+    document.getElementById('alert-temp-change').value = state.tempAlertSettings.change;
+  }
+
   // 价格预警阈值
   document.getElementById('price-drop-threshold').value = state.settings.priceDropThreshold;
   document.getElementById('price-rise-threshold').value = state.settings.priceRiseThreshold;
@@ -2599,6 +2938,23 @@ function init() {
 
     // 自动行情 (fire-and-forget, non-blocking)
     processAutoMarket().catch(()=>{});
+
+    // 室外气温传感器模拟 (每5分钟)
+    if (state.tempSensors.length > 0 && Date.now() - (state._lastTempSim||0) >= 300000) {
+      state._lastTempSim = Date.now();
+      state.tempSensors.forEach(ts => {
+        if (!ts.simEnabled) return;
+        const last = ts.history.length>0 ? ts.history[ts.history.length-1].temp : 22;
+        ts.history.push({
+          temp: Math.round(Math.max(-15, Math.min(45, last + (Math.random()-0.5)*3)) * 10) / 10,
+          time: Date.now()
+        });
+        const cutoff = Date.now() - 7*86400000;
+        ts.history = ts.history.filter(h=>h.time>=cutoff);
+        if (ts.history.length > 200) ts.history = ts.history.slice(-200);
+      });
+      updateMonitorPanel();
+    }
 
     // 自动天气 (每30分钟) — fire-and-forget
     if (state.settings.autoWeather && Date.now()-state.lastWeatherTime >= 1800000) {
@@ -2680,6 +3036,8 @@ window.App = {
   clearRecords,
   addGreenhouse, removeGreenhouse, renameGreenhouse, toggleGreenhouseSim,
   updateSensorChart,
+  checkAllConnections, pingTest, updateMonitorPanel,
+  addTempSensor, removeTempSensor, renameTempSensor, refreshAllTempSensors, updateTempChart, saveTempAlertSettings,
   refreshAll,
 };
 
