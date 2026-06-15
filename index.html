@@ -155,6 +155,7 @@ tr:hover { background:rgba(45,106,79,.04); }
   <button class="tab-btn" data-tab="tab-weather"><i class="fas fa-cloud-sun"></i>天气预报</button>
   <button class="tab-btn" data-tab="tab-sensors"><i class="fas fa-thermometer-half"></i>大棚监测</button>
   <button class="tab-btn" data-tab="tab-monitor"><i class="fas fa-satellite-dish"></i>监控通道</button>
+	  <button class="tab-btn" data-tab="tab-camera"><i class="fas fa-video"></i>视频监控</button>
 	  <button class="tab-btn" data-tab="tab-auto"><i class="fas fa-cogs"></i>自动化</button>
 </nav>
 
@@ -377,6 +378,33 @@ tr:hover { background:rgba(45,106,79,.04); }
       <div class="form-group"><label>低温预警 °C</label><input type="number" id="alert-temp-low" value="2" min="-20" max="15" onchange="App.saveTempAlertSettings()"></div>
       <div class="form-group"><label>温度骤变预警 °C/h</label><input type="number" id="alert-temp-change" value="8" min="3" max="20" onchange="App.saveTempAlertSettings()"></div>
     </div>
+  </div>
+</div>
+
+<!-- ===== TAB 8: 视频监控 ===== -->
+<div class="tab-panel" id="tab-camera">
+  <div class="card">
+    <h3><i class="fas fa-video"></i>摄像头管理
+      <button class="btn btn-sm btn-primary" onclick="App.addIpCamera()" style="margin-left:12px;"><i class="fas fa-plus"></i>添加IP摄像头</button>
+      <button class="btn btn-sm btn-success" onclick="App.openWebcam()"><i class="fas fa-webcam"></i>打开USB摄像头</button>
+      <button class="btn btn-sm btn-outline" onclick="App.refreshAllCameras()"><i class="fas fa-sync-alt"></i>全部刷新</button>
+      <span style="font-size:.78em;color:var(--text2);margin-left:8px;">共 <strong id="camera-count">0</strong> 路摄像头</span>
+    </h3>
+    <div id="camera-grid" class="grid2"></div>
+  </div>
+  <div class="card" id="webcam-card" style="display:none;">
+    <h3><i class="fas fa-webcam"></i>USB摄像头实时画面
+      <button class="btn btn-sm btn-danger" onclick="App.closeWebcam()" style="margin-left:12px;"><i class="fas fa-stop"></i>关闭</button>
+      <button class="btn btn-sm btn-outline" onclick="App.captureWebcamSnapshot()"><i class="fas fa-camera"></i>截图保存</button>
+    </h3>
+    <div style="text-align:center;background:#000;border-radius:8px;overflow:hidden;max-height:480px;">
+      <video id="webcam-video" autoplay playsinline muted style="width:100%;max-width:800px;display:block;margin:0 auto;"></video>
+    </div>
+    <canvas id="webcam-canvas" style="display:none;"></canvas>
+  </div>
+  <div class="card" id="snapshot-gallery-card" style="display:none;">
+    <h3><i class="fas fa-images"></i>截图回看 <button class="btn btn-sm btn-outline" onclick="App.clearRecords('snapshots')" style="margin-left:8px;"><i class="fas fa-eraser"></i>清空</button></h3>
+    <div id="snapshot-gallery" style="display:flex;flex-wrap:wrap;gap:8px;overflow-x:auto;padding:4px 0;"></div>
   </div>
 </div>
 
@@ -713,6 +741,8 @@ let state = {
   connLog: Storage.get('connLog', []),
   connStatus: Storage.get('connStatus', {}),
   tempAlertSettings: Storage.get('tempAlertSettings', {high:38, low:2, change:8}),
+  cameras: Storage.get('cameras', []),
+  snapshots: Storage.get('snapshots', []),
 };
 
 // 持久化辅助
@@ -739,6 +769,8 @@ function saveAll() {
   Storage.set('connLog', state.connLog);
   Storage.set('connStatus', state.connStatus);
   Storage.set('tempAlertSettings', state.tempAlertSettings);
+  Storage.set('cameras', state.cameras);
+  Storage.set('snapshots', state.snapshots);
   Storage.set('selectedIds', state.selectedIds);
 }
 
@@ -2023,6 +2055,259 @@ function updateMonitorPanel() {
   updateTempChart();
 }
 
+
+// ==================== 视频监控 ====================
+let _webcamStream = null;
+
+function addIpCamera(name, url, type) {
+  const camera = {
+    id: 'cam_' + Date.now(),
+    name: name || ('摄像头 '+(state.cameras.length+1)),
+    url: url || '',
+    type: type || 'mjpeg',
+    refreshInterval: 5,
+    autoRefresh: true,
+    lastSnapshot: null,
+  };
+  state.cameras.push(camera);
+  addAlert('info', '📹 '+camera.name+' 已添加');
+  saveAll();
+  renderCameraGrid();
+}
+
+function removeCamera(id) {
+  const cam = state.cameras.find(c=>c.id===id);
+  if (!cam) return;
+  if (!confirm('确定删除 ['+cam.name+'] 吗？')) return;
+  state.cameras = state.cameras.filter(c=>c.id!==id);
+  saveAll();
+  renderCameraGrid();
+  addAlert('info', '🗑️ 已删除摄像头: '+cam.name);
+}
+
+function renameCamera(id, newName) {
+  const cam = state.cameras.find(c=>c.id===id);
+  if (!cam||!newName.trim()) return;
+  cam.name = newName.trim();
+  saveAll();
+  renderCameraGrid();
+}
+
+function refreshAllCameras() {
+  state.cameras.forEach(cam => { captureSnapshot(cam.id); });
+  renderCameraGrid();
+}
+
+function captureSnapshot(id) {
+  const cam = state.cameras.find(c=>c.id===id);
+  if (!cam || !cam.url) return;
+  const timestamp = new Date().toLocaleString('zh-CN');
+  cam.lastSnapshot = { time: timestamp, url: cam.url };
+  if (cam.type === 'snapshot') {
+    state.snapshots.unshift({
+      id: 'snap_'+Date.now(),
+      cameraName: cam.name,
+      time: timestamp,
+      url: cam.url,
+    });
+    if (state.snapshots.length > 50) state.snapshots.length = 50;
+    renderSnapshotGallery();
+  }
+  saveAll();
+}
+
+function copyRtspUrl(id) {
+  const cam = state.cameras.find(c=>c.id===id);
+  if (!cam || !cam.url) return;
+  navigator.clipboard.writeText(cam.url).then(
+    ()=>addAlert('info','📋 RTSP地址已复制到剪贴板'),
+    ()=>alert('复制失败，请手动复制:\n'+cam.url)
+  );
+}
+
+function renderCameraGrid() {
+  const container = document.getElementById('camera-grid');
+  const countEl = document.getElementById('camera-count');
+  if (!container) return;
+  if (countEl) countEl.textContent = state.cameras.length;
+
+  if (state.cameras.length === 0) {
+    container.innerHTML = '<div class="card" style="text-align:center;color:var(--text2);padding:24px;">'+
+      '<p style="font-size:2em;">📹</p>'+
+      '<p>暂无摄像头，点击上方按钮添加</p>'+
+      '<div style="margin-top:12px;font-size:.85em;">'+
+        '<div>+ <strong>添加IP摄像头</strong> — 输入MJPEG/JPEG快照URL</div>'+
+        '<div>+ <strong>打开USB摄像头</strong> — 使用电脑自带或外接USB摄像头</div>'+
+      '</div></div>';
+    return;
+  }
+
+  container.innerHTML = state.cameras.map(function(cam) {
+    const typeLabel = cam.type==='mjpeg'?'MJPEG流':cam.type==='snapshot'?'快照':cam.type==='rtsp'?'RTSP流':'未知';
+    const snapshotUrl = cam.url + (cam.url.includes('?')?'&':'?') + '_t=' + Date.now();
+    const statusColor = cam.url ? 'var(--success)' : 'var(--danger)';
+    const statusText = cam.url ? '已连接' : '未配置URL';
+    const eid = JSON.stringify(cam.id); // safe ID for attributes
+
+    var viewerHtml = '';
+    if (cam.type === 'rtsp') {
+      viewerHtml = '<div style="background:#000;height:220px;display:flex;align-items:center;justify-content:center;color:#fff;border-radius:6px;">'+
+        '<div style="text-align:center;">'+
+          '<div style="font-size:2em;">🔗</div>'+
+          '<div style="font-size:.8em;margin:6px 0;">RTSP流需外部播放器</div>'+
+          '<div style="font-size:.7em;opacity:.7;max-width:200px;word-break:break-all;margin:4px 0;">'+cam.url+'</div>'+
+          '<button class="btn btn-sm btn-outline" style="margin-top:6px;color:#fff;border-color:#fff;" onclick="App.copyRtspUrl('+cam.id+')"><i class="fas fa-copy"></i>复制地址</button>'+
+        '</div></div>';
+    } else if (cam.url) {
+      viewerHtml = '<img src="'+snapshotUrl+'" alt="'+cam.name+'" style="width:100%;height:240px;object-fit:contain;background:#000;border-radius:6px;" id="cam-img-'+cam.id+'" onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22240%22><rect fill=%22%23333%22 width=%22320%22 height=%22240%22/><text fill=%22%23999%22 x=%22160%22 y=%22120%22 text-anchor=%22middle%22 font-size=%2216%22>无法加载</text></svg>\'">';
+    } else {
+      viewerHtml = '<div style="background:#000;height:220px;display:flex;align-items:center;justify-content:center;color:#999;border-radius:6px;">'+
+        '<div style="text-align:center;"><div style="font-size:2em;">📷</div><div>请配置视频源URL</div></div></div>';
+    }
+
+    return '<div class="card">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
+        '<div style="flex:1;">'+
+          '<input type="text" value="'+cam.name+'" onchange="App.renameCamera(\''+cam.id+'\',this.value)" '+
+            'style="border:none;background:none;font:inherit;font-weight:700;color:var(--primary);min-width:80px;width:auto;padding:2px 0;">'+
+          '<span class="badge badge-info" style="margin-left:6px;">'+typeLabel+'</span>'+
+          '<span style="font-size:.72em;color:'+statusColor+';margin-left:6px;">● '+statusText+'</span>'+
+        '</div>'+
+        '<div style="display:flex;gap:4px;flex-shrink:0;">'+
+          '<button class="btn btn-sm btn-outline" onclick="App.captureSnapshot(\''+cam.id+'\')" title="手动截图"><i class="fas fa-camera"></i></button>'+
+          '<button class="btn btn-sm btn-danger" onclick="App.removeCamera(\''+cam.id+'\')" title="删除"><i class="fas fa-trash"></i></button>'+
+        '</div>'+
+      '</div>'+
+      viewerHtml +
+      '<div style="margin-top:8px;font-size:.75em;color:var(--text2);">'+
+        '<div style="display:flex;align-items:center;gap:8px;">'+
+          '<input type="text" value="'+(cam.url||'')+'" placeholder="视频流URL (http://...)" '+
+            'onchange="App.updateCameraUrl(\''+cam.id+'\',this.value)" '+
+            'style="flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:inherit;background:var(--card);color:var(--text);">'+
+          '<select onchange="App.updateCameraType(\''+cam.id+'\',this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:inherit;background:var(--card);color:var(--text);">'+
+            '<option value="mjpeg"'+(cam.type==='mjpeg'?' selected':'')+'>MJPEG流</option>'+
+            '<option value="snapshot"'+(cam.type==='snapshot'?' selected':'')+'>JPEG快照</option>'+
+            '<option value="rtsp"'+(cam.type==='rtsp'?' selected':'')+'>RTSP流</option>'+
+          '</select>'+
+          '<label style="font-size:.75em;display:flex;align-items:center;gap:4px;white-space:nowrap;">'+
+            '<input type="number" value="'+cam.refreshInterval+'" min="1" max="60" style="width:40px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;font-size:inherit;background:var(--card);color:var(--text);"'+
+              'onchange="App.updateCameraInterval(\''+cam.id+'\',this.value)">s刷新'+
+          '</label>'+
+        '</div>'+
+        (cam.lastSnapshot ? '<div style="margin-top:4px;">最后截图: '+cam.lastSnapshot.time+'</div>' : '') +
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function updateCameraUrl(id, url) {
+  const cam = state.cameras.find(c=>c.id===id);
+  if (!cam) return;
+  cam.url = url.trim();
+  saveAll();
+  renderCameraGrid();
+}
+
+function updateCameraType(id, type) {
+  const cam = state.cameras.find(c=>c.id===id);
+  if (!cam) return;
+  cam.type = type;
+  saveAll();
+  renderCameraGrid();
+}
+
+function updateCameraInterval(id, val) {
+  const cam = state.cameras.find(c=>c.id===id);
+  if (!cam) return;
+  cam.refreshInterval = Math.max(1, Math.min(60, parseInt(val)||5));
+  saveAll();
+}
+
+// USB Webcam
+async function openWebcam() {
+  try {
+    _webcamStream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'environment' },
+      audio: false
+    });
+    const video = document.getElementById('webcam-video');
+    video.srcObject = _webcamStream;
+    document.getElementById('webcam-card').style.display = 'block';
+    addAlert('success', '📷 USB摄像头已开启');
+  } catch(e) {
+    addAlert('danger', '❌ 无法打开摄像头: '+e.message);
+    try {
+      _webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      const video = document.getElementById('webcam-video');
+      video.srcObject = _webcamStream;
+      document.getElementById('webcam-card').style.display = 'block';
+      addAlert('success', '📷 USB摄像头已开启(降级模式)');
+    } catch(e2) {
+      addAlert('danger', '❌ 摄像头不可用: '+e2.message);
+    }
+  }
+}
+
+function closeWebcam() {
+  if (_webcamStream) {
+    _webcamStream.getTracks().forEach(function(t) { t.stop(); });
+    _webcamStream = null;
+  }
+  const video = document.getElementById('webcam-video');
+  if (video) video.srcObject = null;
+  document.getElementById('webcam-card').style.display = 'none';
+  addAlert('info', '📷 USB摄像头已关闭');
+}
+
+function captureWebcamSnapshot() {
+  const video = document.getElementById('webcam-video');
+  const canvas = document.getElementById('webcam-canvas');
+  if (!video || !video.srcObject) {
+    alert('请先开启USB摄像头');
+    return;
+  }
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+  state.snapshots.unshift({
+    id: 'snap_'+Date.now(),
+    cameraName: 'USB摄像头',
+    time: new Date().toLocaleString('zh-CN'),
+    url: dataUrl,
+  });
+  if (state.snapshots.length > 50) state.snapshots.length = 50;
+  saveAll();
+  renderSnapshotGallery();
+  addAlert('success', '📸 USB摄像头截图已保存');
+}
+
+function renderSnapshotGallery() {
+  const gallery = document.getElementById('snapshot-gallery');
+  const card = document.getElementById('snapshot-gallery-card');
+  if (!gallery) return;
+  if (state.snapshots.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+  gallery.innerHTML = state.snapshots.slice(0,20).map(function(s) {
+    return '<div style="position:relative;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0;">'+
+      '<a href="'+s.url+'" target="_blank" download="snapshot_'+s.id+'.jpg">'+
+        '<img src="'+s.url+'" style="width:160px;height:120px;object-fit:cover;" title="'+s.cameraName+' — '+s.time+'">'+
+      '</a>'+
+      '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:.65em;padding:2px 6px;text-align:center;">'+s.time+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function updateCameraPanel() {
+  renderCameraGrid();
+  renderSnapshotGallery();
+}
+
+
 function updateAutoTasks() {
   const tbody = document.getElementById('auto-tasks-body');
   const tasks = [
@@ -2673,6 +2958,7 @@ function refreshAll() {
   updateWeatherUI();
   updateSensorUI();
   updateMonitorPanel();
+  updateCameraPanel();
   updateAutoTasks();
   updateFilterDropdowns();
 }
@@ -2749,6 +3035,11 @@ function clearRecords(type) {
       state.lastWeatherTime = 0;
       Storage.set('weatherCache', {});
       addAlert('info', '🗑️ 天气缓存已清空');
+      break;
+    case 'snapshots':
+      state.snapshots = [];
+      renderSnapshotGallery();
+      addAlert('info', '🗑️ 截图已清空');
       break;
     case 'connLog':
       state.connLog = [];
@@ -2939,6 +3230,20 @@ function init() {
     // 自动行情 (fire-and-forget, non-blocking)
     processAutoMarket().catch(()=>{});
 
+    // 摄像头自动刷新 (按各自间隔)
+    state.cameras.forEach(cam => {
+      if (!cam.url || cam.type==='rtsp' || !cam.autoRefresh) return;
+      const interval = (cam.refreshInterval || 5) * 1000;
+      if (Date.now() - (cam._lastRefresh || 0) >= interval) {
+        cam._lastRefresh = Date.now();
+        cam.lastSnapshot = { time: new Date().toLocaleString('zh-CN'), url: cam.url };
+        const img = document.getElementById('cam-img-'+cam.id);
+        if (img) {
+          img.src = cam.url + (cam.url.includes('?')?'&':'?') + '_t=' + Date.now();
+        }
+      }
+    });
+
     // 室外气温传感器模拟 (每5分钟)
     if (state.tempSensors.length > 0 && Date.now() - (state._lastTempSim||0) >= 300000) {
       state._lastTempSim = Date.now();
@@ -3038,6 +3343,7 @@ window.App = {
   updateSensorChart,
   checkAllConnections, pingTest, updateMonitorPanel,
   addTempSensor, removeTempSensor, renameTempSensor, refreshAllTempSensors, updateTempChart, saveTempAlertSettings,
+  addIpCamera, removeCamera, renameCamera, refreshAllCameras, captureSnapshot, openWebcam, closeWebcam, captureWebcamSnapshot, copyRtspUrl, updateCameraUrl, updateCameraType, updateCameraInterval, updateCameraPanel,
   refreshAll,
 };
 
