@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta name="description" content="全自动化养鸡监测平台 — 集成鸡群管理、行情交易、统计报表、天气预报、大棚监测与自动化控制，助力现代化养殖管理。" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>全自动化养鸡监测平台 v2.0</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -141,7 +142,7 @@ tr:hover { background:rgba(45,106,79,.04); }
     <div class="metric"><i class="fas fa-egg"></i>今日产蛋:<span class="val" id="hdr-eggs">0</span>枚</div>
     <div class="metric"><i class="fas fa-box"></i>饲料:<span class="val" id="hdr-feed">0</span>kg</div>
     <div class="metric"><i class="fas fa-tint"></i>水:<span class="val" id="hdr-water">0</span>L</div>
-    <div class="metric"><i class="fas fa-coins"></i>资金:<span class="val" id="hdr-money">0</span>元</div>
+    <div class="metric"><i class="fas fa-coins"></i>资金:<span class="val" id="hdr-money">0</span>元 <button class="btn btn-sm btn-primary" onclick="App.addFunds()" title="补充资金" style="margin-left:4px;padding:2px 8px;font-size:.7em;"><i class="fas fa-plus"></i></button></div>
   </div>
   <button class="theme-btn" onclick="App.toggleTheme()" title="切换主题"><i class="fas fa-moon"></i></button>
 </header>
@@ -176,7 +177,7 @@ tr:hover { background:rgba(45,106,79,.04); }
   </div>
   <!-- 饲料与水管理 — 鸡只列表上方 -->
   <div class="card">
-    <h3><i class="fas fa-utensils"></i>饲料与水管理 <button class="btn btn-sm btn-outline" onclick="App.clearFeedWater()" style="margin-left:8px;" title="重置库存到默认值"><i class="fas fa-undo"></i>重置库存</button></h3>
+    <h3><i class="fas fa-utensils"></i>饲料与水管理 <button class="btn btn-sm btn-outline" onclick="App.clearFeedWater()" style="margin-left:8px;" title="清空饲料和水库存（重置为零）"><i class="fas fa-undo"></i>重置库存</button></h3>
     <div class="grid3">
       <div class="quick-stat"><div class="num" id="feed-stock">0</div><div class="label">饲料库存 (kg)</div></div>
       <div class="quick-stat"><div class="num" id="water-stock">0</div><div class="label">水库存 (L)</div></div>
@@ -227,7 +228,7 @@ tr:hover { background:rgba(45,106,79,.04); }
 <div class="tab-panel" id="tab-market">
   <div class="card">
     <h3><i class="fas fa-chart-line"></i>中国大陆实时行情
-      <button class="btn btn-sm btn-primary" onclick="App.refreshMarket()" style="margin-left:12px;"><i class="fas fa-sync-alt"></i>刷新行情</button>
+      <button class="btn btn-sm btn-primary" id="btn-refresh-market" onclick="App.refreshMarket()" style="margin-left:12px;"><i class="fas fa-sync-alt"></i>刷新行情</button>
               <button class="btn btn-sm btn-outline" onclick="App.showModal('modal-price-alert')" style="margin-left:6px;"><i class="fas fa-bell"></i>价格预警</button><button class="btn btn-sm btn-outline" onclick="App.showModal('modal-api-settings')" style="margin-left:6px;"><i class="fas fa-plug"></i>API设置</button>
       <span style="font-size:.75em;color:var(--text2);margin-left:8px;" id="market-update-time"></span>
     </h3>
@@ -1146,8 +1147,10 @@ function processAutoFeed() {
     if (state.feedStock >= consumedKg) {
       state.feedStock = Math.round((state.feedStock - consumedKg) * 100) / 100;
       state.lastFeedTime = now;
-    } else {
-      addAlert('danger', `⚠️ 饲料库存不足！当前 ${state.feedStock.toFixed(1)}kg，需 ${consumedKg.toFixed(1)}kg，自动喂食暂停。`);
+      state._feedShortAlerted = false;
+    } else if (!state._feedShortAlerted) {
+      addAlert('danger', `⚠️ 饲料库存不足！当前 ${state.feedStock.toFixed(1)}kg，需 ${consumedKg.toFixed(1)}kg，自动喂食暂停。请及时补充饲料。`);
+      state._feedShortAlerted = true;
     }
   }
 
@@ -1158,8 +1161,10 @@ function processAutoFeed() {
     if (state.waterStock >= consumedL) {
       state.waterStock = Math.round((state.waterStock - consumedL) * 100) / 100;
       state.lastWaterTime = now;
-    } else {
-      addAlert('danger', `⚠️ 饮水库存不足！当前 ${state.waterStock.toFixed(1)}L，需 ${consumedL.toFixed(1)}L，自动喂水暂停。`);
+      state._waterShortAlerted = false;
+    } else if (!state._waterShortAlerted) {
+      addAlert('danger', `⚠️ 饮水库存不足！当前 ${state.waterStock.toFixed(1)}L，需 ${consumedL.toFixed(1)}L，自动喂水暂停。请及时补充饮水。`);
+      state._waterShortAlerted = true;
     }
   }
   saveAll();
@@ -1325,7 +1330,7 @@ function updateChickenTable(filterBreed='all', filterStatus='all', filterSearch=
       <td onclick="App.showChickenDetail('${c.id}')">${age}天</td>
       <td onclick="App.showChickenDetail('${c.id}')">${weight.toFixed(3)}</td>
       <td onclick="App.showChickenDetail('${c.id}')">${statusLabel}${vaccDue>0?` <span class="badge badge-danger">疫苗逾期${vaccDue}</span>`:''}</td>
-      <td onclick="App.showChickenDetail('${c.id}')">${breed?.type==='layer'?eggTotal:'-'}/-</td>
+      <td onclick="App.showChickenDetail('${c.id}')">${breed?.type==='layer'?eggTotal:'—'}</td>
       <td onclick="App.showChickenDetail('${c.id}')">${vaccCount}次</td>
       <td onclick="App.showChickenDetail('${c.id}')">${sellDate}</td>
       <td><button class="btn btn-sm btn-outline" onclick="event.stopPropagation();App.showChickenDetail('${c.id}')"><i class="fas fa-eye"></i></button></td>
@@ -1396,7 +1401,7 @@ function updateFeedDisplay() {
   document.getElementById('water-stock').textContent = state.waterStock.toFixed(1);
   const alive = state.chickens.filter(c=>c.status==='alive');
   const totalDailyFeed = alive.reduce((s,c)=>s+getDailyFeedIntake(c), 0);
-  document.getElementById('feed-rate').textContent = (totalDailyFeed * alive.length / 1000).toFixed(1);
+  document.getElementById('feed-rate').textContent = (totalDailyFeed / 1000).toFixed(1);
   document.getElementById('toggle-auto-feed').checked = state.settings.autoFeed;
 }
 
@@ -1958,10 +1963,9 @@ function clearAllChickens() {
   document.getElementById('selected-count').textContent = '0';
   const selectAll = document.getElementById('select-all-chickens');
   if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
-  App.renderChickenTable();
-  App.updateMetrics();
+  App.refreshAll();
   alert('已清除全部 ' + count + ' 只鸡的记录。');
-  logAlert('info', '系统', '已清除全部 ' + count + ' 只鸡的库存记录。');
+  addAlert('info', '已清除全部 ' + count + ' 只鸡的库存记录。');
 }
 
 function batchSellSelected() {
@@ -2188,6 +2192,15 @@ function addWater() {
   refreshAll();
 }
 
+function addFunds() {
+  const amount = parseFloat(prompt('请输入要补充的资金金额（元）：', '10000'));
+  if (!amount || amount <= 0) return;
+  state.money = Math.round((state.money + amount) * 100) / 100;
+  addAlert('success', `💰 成功补充资金 ${amount.toFixed(2)} 元，当前余额 ${state.money.toFixed(2)} 元。`);
+  saveAll();
+  refreshAll();
+}
+
 function clearFeedWater() {
   if (!confirm('确定将饲料和水库存清零？\n饲料 → 0kg，水 → 0L')) return;
   state.feedStock = 0;
@@ -2235,6 +2248,8 @@ function updateGhThresholds(id) {
 }
 
 async function refreshMarket() {
+  const btn = document.getElementById('btn-refresh-market');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i>刷新中...'; }
   try {
     state.marketData = await fetchMarketData();
   } catch(e) {
@@ -2246,6 +2261,7 @@ async function refreshMarket() {
   checkPriceAlerts();
   saveAll();
   updateMarketTable();
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i>刷新行情'; }
   addAlert('info', '📊 行情数据已刷新。' + (state.marketData._source ? ` 来源: ${state.marketData._source}` : ''));
 }
 
@@ -2525,8 +2541,8 @@ function init() {
   initCityDropdowns();
 
   // 恢复选中的城市天气 — 同步展示缓存，后台异步拉取最新
-  const savedCity = Storage.get('selectedCity', '');
-  if (savedCity) {
+  const savedCity = Storage.get('selectedCity', '北京');
+  if (savedCity && savedCity.trim()) {
     document.getElementById('weather-search').value = savedCity;
     // 有缓存先展示缓存
     if (state.weatherCache[savedCity]) {
@@ -2545,7 +2561,7 @@ function init() {
     })();
   }
 
-  // API 设置
+    // API 设置
   document.getElementById('api-qweather-key').value = state.settings.apiQWeatherKey || '';
   document.getElementById('api-juhe-key').value = state.settings.apiJuheKey || '';
   document.getElementById('api-market-url').value = state.settings.apiMarketUrl || '';
@@ -2560,7 +2576,8 @@ function init() {
   // 初次渲染
   refreshAll();
 
-  // ===== 主循环 (每秒) =====
+  // ===== 主循环 (每秒执行逻辑, 每5秒持久化) =====
+  let _saveCounter = 0;
   setInterval(() => {
     // 传感器模拟 (每5秒，遍历所有大棚)
     state.greenhouses.forEach(gh => {
@@ -2602,7 +2619,7 @@ function init() {
     updateHeader();
     updateFeedDisplay();
     updateAutoTasks();
-    saveAll();
+    if (++_saveCounter % 5 === 0) saveAll();
   }, 1000);
 
   // 每天更新体重记录 (每10分钟检查)
@@ -2652,7 +2669,7 @@ window.App = {
   sellReadyChickens, recordDeath,
   addBatchVaccine, addVaccineForChicken, deleteVaccine, deleteChicken,
   showChickenDetail,
-  addFeed, addWater, clearFeedWater, sellEggs,
+  addFeed, addWater, addFunds, clearFeedWater, sellEggs,
   saveFeedSettings, updateGhThresholds,
   refreshMarket, toggleAuto,
   updateCities, searchCities, selectCity, updateWeather,
