@@ -4192,10 +4192,15 @@ function init() {
 
 // ==================== 桌宠引擎 ====================
 function initDeskPet() {
+  console.log('🐤 initDeskPet 开始...');
   const petEl = document.getElementById('deskPet');
   const chicken = document.getElementById('dpChicken');
   const bubble = document.getElementById('dpBubble');
-  if (!petEl || !bubble) return;
+  console.log('🐤 DOM:', !!petEl, !!chicken, !!bubble);
+  if (!petEl || !bubble) {
+    console.warn('🐤 桌宠 DOM 未找到，跳过初始化');
+    return;
+  }
 
   // 位置状态
   let pet = { x:NaN, y:NaN, dragging:false, ox:0, oy:0 };
@@ -4218,6 +4223,10 @@ function initDeskPet() {
     petEl.style.bottom = 'auto';
   }
   clampPos();
+
+  // 首次加载闪光效果
+  petEl.style.filter = 'drop-shadow(0 0 20px rgba(212,168,83,.8))';
+  setTimeout(() => { petEl.style.filter = ''; }, 2000);
 
   // 气泡说话
   let bubbleTimer;
@@ -4261,7 +4270,7 @@ function initDeskPet() {
   ];
 
   // 定时播报 (初始播报 + 每 10 分钟)
-  setTimeout(() => reportWeather(), 3000);
+  setTimeout(() => reportWeather(), 1000);
   setInterval(() => reportWeather(), 600000);
 
   // 随机说话 (每 60-120 秒)
