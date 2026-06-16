@@ -132,59 +132,84 @@ tr:hover { background:rgba(45,106,79,.04); }
 .quick-stat .num { font-size:1.4em; font-weight:700; color:var(--primary); }
 .quick-stat .label { font-size:.78em; color:var(--text2); }
 
-/* ========== 桌宠小鸡 ========== */
-.desk-pet { position:fixed; bottom:20px; right:20px; width:160px; height:200px; cursor:grab; z-index:99999; transition:filter .3s; }
+/* ========== 桌宠小鸡 — 圆滚滚版 ========== */
+.desk-pet { position:fixed; bottom:20px; right:20px; width:130px; height:170px; cursor:grab; z-index:99999; }
 .desk-pet:active { cursor:grabbing; }
 .desk-pet.dragging { filter:drop-shadow(0 4px 16px rgba(0,0,0,.18)); }
 
-.dp-chicken { position:relative; width:140px; height:160px; margin:0 auto; animation:dp-idle 2.4s ease-in-out infinite; }
-.dp-body { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); width:100px; height:88px;
-  background:linear-gradient(175deg,#FDE68A 0%,#F9E076 40%,#E8C84A 100%); border-radius:50% 50% 45% 45%;
-  box-shadow:inset 0 -6px 12px rgba(180,140,30,.15),inset 0 3px 6px rgba(255,255,255,.3),0 2px 6px rgba(0,0,0,.06); z-index:2; }
-.dp-body::after { content:''; position:absolute; bottom:6px; left:22px; width:56px; height:40px;
-  background:radial-gradient(ellipse,rgba(255,252,235,.65) 0%,transparent 70%); border-radius:50%; }
-
-.dp-head { position:absolute; top:0; left:50%; transform:translateX(-50%); width:72px; height:66px;
-  background:linear-gradient(175deg,#FDE68A 0%,#F9E076 55%,#E8C84A 100%); border-radius:50%; z-index:5;
-  box-shadow:inset 0 3px 5px rgba(255,255,255,.28); animation:dp-tilt 5s ease-in-out infinite; }
-.dp-comb { position:absolute; top:-12px; left:50%; transform:translateX(-50%); z-index:6; }
-.dp-comb span { position:absolute; background:#E85D3A; border-radius:50% 50% 30% 30%; box-shadow:inset 0 -2px 3px rgba(0,0,0,.1); }
-.dp-comb span:nth-child(1) { width:18px; height:22px; left:-2px; top:-4px; }
-.dp-comb span:nth-child(2) { width:16px; height:26px; left:12px; top:-10px; }
-.dp-comb span:nth-child(3) { width:14px; height:18px; left:26px; top:-2px; }
-.dp-wattle { position:absolute; bottom:-18px; left:50%; transform:translateX(-50%);
-  width:14px; height:18px; background:#E85D3A; border-radius:50%; z-index:7; opacity:.8; }
-.dp-eye { position:absolute; top:18px; width:16px; height:18px; background:#FFFEF8; border-radius:50%;
-  box-shadow:inset 0 0 2px rgba(0,0,0,.06); z-index:7; }
-.dp-eye.l { left:6px; } .dp-eye.r { right:6px; }
-.dp-pupil { position:absolute; width:8px; height:9px; background:#1a1a1a; border-radius:50%; top:5px; left:5px; }
-.dp-pupil::after { content:''; position:absolute; width:3px; height:3px; background:#fff; border-radius:50%; top:1px; left:1px; }
-.dp-beak { position:absolute; top:32px; left:50%; transform:translateX(-50%); width:0; height:0;
-  border-left:8px solid transparent; border-right:8px solid transparent; border-top:10px solid #F0A030; z-index:8; }
-.dp-blush { position:absolute; top:28px; width:12px; height:7px; background:rgba(255,150,130,.4); border-radius:50%; z-index:6; filter:blur(1.5px); }
-.dp-blush.l { left:18px; } .dp-blush.r { right:18px; }
-.dp-wing { position:absolute; bottom:48px; width:32px; height:44px;
-  background:linear-gradient(180deg,#FDE68A 0%,#E8C84A 100%); border-radius:60% 40% 50% 50%; z-index:4;
-  box-shadow:0 1px 3px rgba(0,0,0,.05); transform-origin:top center; animation:dp-flutter 3s ease-in-out infinite; }
-.dp-wing.l { left:26px; animation-delay:0s; } .dp-wing.r { right:26px; animation-delay:1.5s; }
-.dp-feet { position:absolute; bottom:6px; left:50%; transform:translateX(-50%); width:56px; z-index:3; }
-.dp-foot { position:absolute; bottom:0; width:4px; height:14px; background:#E8923A; border-radius:2px; }
-.dp-foot.l { left:10px; } .dp-foot.m { left:26px; } .dp-foot.r { left:42px; }
-
-@keyframes dp-idle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
-@keyframes dp-tilt { 0%,45%,55%,100%{transform:translateX(-50%) rotate(0)} 48%{transform:translateX(-50%) rotate(-5deg)} 52%{transform:translateX(-50%) rotate(5deg)} }
-@keyframes dp-flutter { 0%,90%,100%{transform:rotate(0)} 93%{transform:rotate(-18deg)} 96%{transform:rotate(8deg)} }
-
-/* 桌宠气泡 */
-.dp-bubble { position:absolute; bottom:175px; left:50%; transform:translateX(-50%);
+/* 气泡 — 放在小鸡上方 */
+.dp-bubble { position:absolute; bottom:145px; left:50%; transform:translateX(-50%);
   background:#fffef8; border-radius:12px; padding:10px 14px; box-shadow:0 2px 12px rgba(0,0,0,.1);
-  font-size:.78em; color:var(--text); white-space:nowrap; max-width:220px; opacity:0; pointer-events:none;
-  transition:opacity .3s; border:1px solid rgba(180,150,80,.2); }
-.dp-bubble::after { content:''; position:absolute; bottom:-8px; left:50%; transform:translateX(-50%);
-  width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent; border-top:8px solid #fffef8; }
+  font-size:.76em; color:var(--text); white-space:nowrap; max-width:230px; opacity:0; pointer-events:none;
+  transition:opacity .3s; border:1px solid rgba(180,150,80,.2); z-index:10; }
+.dp-bubble::after { content:''; position:absolute; bottom:-7px; left:50%; transform:translateX(-50%);
+  width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-top:7px solid #fffef8; }
 .dp-bubble.show { opacity:1; }
-.dp-bubble .dp-icon { font-size:1.5em; display:block; margin-bottom:2px; }
-.dp-bubble .dp-time { font-size:.7em; color:var(--text2); margin-top:3px; display:block; }
+.dp-bubble .dp-icon { font-size:1.3em; margin-right:2px; }
+.dp-bubble .dp-time { font-size:.7em; color:var(--text2); display:block; margin-top:3px; }
+
+/* 圆滚滚蛋形小鸡 — 头身一体 */
+.dp-chick { position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+  width:110px; height:130px; animation:dp-idle 2.4s ease-in-out infinite; }
+
+/* 主体 — 大椭圆蛋形 */
+.dp-main { position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+  width:100px; height:110px; background:linear-gradient(170deg,#FFF3B0 0%,#FDE68A 35%,#F9D858 70%,#E8C84A 100%);
+  border-radius:50% 50% 48% 48%; z-index:2;
+  box-shadow:inset 0 -10px 18px rgba(180,140,30,.18),inset 0 -2px 8px rgba(200,160,50,.12),inset 0 6px 10px rgba(255,255,255,.4),
+    0 3px 10px rgba(0,0,0,.08); }
+
+/* 肚皮 */
+.dp-main::after { content:''; position:absolute; bottom:12px; left:28px; width:44px; height:36px;
+  background:radial-gradient(ellipse,rgba(255,255,250,.55) 0%,transparent 70%); border-radius:50%; }
+
+/* 呆毛 */
+.dp-tuft { position:absolute; top:2px; left:50%; transform:translateX(-50%); z-index:4; }
+.dp-tuft span { display:block; width:3px; background:#E8C84A; border-radius:2px; margin:0 auto; }
+.dp-tuft span:nth-child(1) { height:12px; transform:rotate(-8deg); margin-bottom:-4px; }
+.dp-tuft span:nth-child(2) { height:10px; transform:rotate(5deg); margin-bottom:-3px; }
+.dp-tuft span:nth-child(3) { height:8px; }
+
+/* 眼睛 — 可爱豆豆眼 */
+.dp-eye { position:absolute; top:34px; width:13px; height:15px; background:#fffef8; border-radius:50%; z-index:3;
+  box-shadow:inset 0 0 2px rgba(0,0,0,.06); }
+.dp-eye.l { left:22px; } .dp-eye.r { right:22px; }
+.dp-pupil { position:absolute; width:7px; height:8px; background:#1a1a1a; border-radius:50%;
+  top:4px; left:4px; transition:transform .15s; }
+.dp-pupil::after { content:''; position:absolute; width:3px; height:3px; background:#fff; border-radius:50%; top:1px; left:1px; }
+
+/* 嘴巴 — 小三角 */
+.dp-beak { position:absolute; top:44px; left:50%; transform:translateX(-50%);
+  width:16px; height:10px; background:#F5A030; border-radius:0 0 50% 50%; z-index:3; }
+
+/* 腮红 — 圆圆粉扑 */
+.dp-blush { position:absolute; top:42px; width:13px; height:8px; background:rgba(255,150,130,.5); border-radius:50%; z-index:3; filter:blur(2px); }
+.dp-blush.l { left:12px; } .dp-blush.r { right:12px; }
+
+/* 小翅膀 */
+.dp-wing { position:absolute; top:52px; width:26px; height:34px;
+  background:linear-gradient(180deg,#FDE68A 0%,#E8C84A 100%); border-radius:50% 60% 50% 50%; z-index:1;
+  transform-origin:top center; animation:dp-flutter 3s ease-in-out infinite; }
+.dp-wing.l { left:8px; animation-delay:0s; }
+.dp-wing.r { right:8px; animation-delay:1.5s; }
+
+/* 小脚丫 */
+.dp-feet { position:absolute; bottom:2px; left:50%; transform:translateX(-50%); width:36px; z-index:3; }
+.dp-foot { position:absolute; bottom:0; width:3px; height:10px; background:#E8923A; border-radius:2px; }
+.dp-foot.l { left:10px; } .dp-foot.r { right:10px; }
+
+/* 蛋壳底座 */
+.dp-shell { position:absolute; bottom:-2px; left:50%; transform:translateX(-50%);
+  width:70px; height:32px; background:linear-gradient(180deg,#FDF5E6 0%,#F5ECD7 60%,#E8DCC4 100%);
+  border-radius:0 0 50% 50%; z-index:4;
+  box-shadow:0 2px 6px rgba(0,0,0,.06),inset 0 2px 4px rgba(255,255,255,.6); }
+.dp-shell::before { content:''; position:absolute; top:-4px; left:4px; right:4px;
+  height:8px; background:rgba(200,180,150,.3); border-radius:50%; }
+.dp-shell::after { content:''; position:absolute; top:2px; left:10px;
+  width:8px; height:6px; background:rgba(180,150,120,.25); border-radius:2px; }
+
+@keyframes dp-idle { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-5px)} }
+@keyframes dp-flutter { 0%,90%,100%{transform:rotate(0)} 93%{transform:rotate(-12deg)} 96%{transform:rotate(6deg)} }
 
 @media (max-width:600px) { .desk-pet { transform:scale(.7); bottom:2px; right:2px; } }
 </style>
@@ -4194,9 +4219,8 @@ function init() {
 function initDeskPet() {
   console.log('🐤 initDeskPet 开始...');
   const petEl = document.getElementById('deskPet');
-  const chicken = document.getElementById('dpChicken');
   const bubble = document.getElementById('dpBubble');
-  console.log('🐤 DOM:', !!petEl, !!chicken, !!bubble);
+  console.log('🐤 DOM:', !!petEl, !!bubble);
   if (!petEl || !bubble) {
     console.warn('🐤 桌宠 DOM 未找到，跳过初始化');
     return;
@@ -4208,15 +4232,15 @@ function initDeskPet() {
     const saved = JSON.parse(localStorage.getItem('cfp_pet_pos'));
     if (saved) { pet.x = saved.x; pet.y = saved.y; }
   } catch (_) {}
-  if (isNaN(pet.x)) { pet.x = window.innerWidth - 180; pet.y = window.innerHeight - 240; }
+  if (isNaN(pet.x)) { pet.x = window.innerWidth - 150; pet.y = window.innerHeight - 210; }
 
   function savePos() {
     try { localStorage.setItem('cfp_pet_pos', JSON.stringify({x:pet.x, y:pet.y})); } catch (_) {}
   }
 
   function clampPos() {
-    pet.x = Math.max(0, Math.min(pet.x, window.innerWidth - 160));
-    pet.y = Math.max(0, Math.min(pet.y, window.innerHeight - 200));
+    pet.x = Math.max(0, Math.min(pet.x, window.innerWidth - 130));
+    pet.y = Math.max(0, Math.min(pet.y, window.innerHeight - 170));
     petEl.style.left = pet.x + 'px';
     petEl.style.top = pet.y + 'px';
     petEl.style.right = 'auto';
@@ -4294,8 +4318,8 @@ function initDeskPet() {
 
   // 双击 → 返回默认位置
   petEl.addEventListener('dblclick', () => {
-    pet.x = window.innerWidth - 160;
-    pet.y = window.innerHeight - 220;
+    pet.x = window.innerWidth - 150;
+    pet.y = window.innerHeight - 210;
     clampPos();
     savePos();
     say('<span class="dp-icon">🏠</span>回到这里啦~', 2000);
@@ -4386,22 +4410,21 @@ window.App = {
 document.addEventListener('DOMContentLoaded', init);
 </script>
 
-<!-- ========== 桌宠小鸡 ========== -->
-<div class="desk-pet" id="deskPet" title="🐔 小助手 — 点击查看天气">
+<!-- ========== 桌宠小鸡 — 破壳圆滚滚 ========== -->
+<div class="desk-pet" id="deskPet" title="🐤 点我看天气 | 双击归位">
   <div class="dp-bubble" id="dpBubble"></div>
-  <div class="dp-chicken" id="dpChicken">
-    <div class="dp-head">
-      <div class="dp-comb"><span></span><span></span><span></span></div>
-      <div class="dp-wattle"></div>
+  <div class="dp-chick">
+    <div class="dp-tuft"><span></span><span></span><span></span></div>
+    <div class="dp-main">
       <div class="dp-eye l"><div class="dp-pupil"></div></div>
       <div class="dp-eye r"><div class="dp-pupil"></div></div>
-      <div class="dp-blush l"></div><div class="dp-blush r"></div>
       <div class="dp-beak"></div>
+      <div class="dp-blush l"></div><div class="dp-blush r"></div>
+      <div class="dp-wing l"></div><div class="dp-wing r"></div>
     </div>
-    <div class="dp-body"></div>
-    <div class="dp-wing l"></div><div class="dp-wing r"></div>
+    <div class="dp-shell"></div>
     <div class="dp-feet">
-      <div class="dp-foot l"></div><div class="dp-foot m"></div><div class="dp-foot r"></div>
+      <div class="dp-foot l"></div><div class="dp-foot r"></div>
     </div>
   </div>
 </div>
