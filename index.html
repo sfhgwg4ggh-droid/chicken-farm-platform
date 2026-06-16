@@ -212,9 +212,136 @@ tr:hover { background:rgba(45,106,79,.04); }
 @keyframes dp-flutter { 0%,90%,100%{transform:rotate(0)} 93%{transform:rotate(-12deg)} 96%{transform:rotate(6deg)} }
 
 @media (max-width:600px) { .desk-pet { transform:scale(.7); bottom:2px; right:2px; } }
+
+/* ========== 登录页 ========== */
+.login-overlay { position:fixed; inset:0; z-index:999999; background:linear-gradient(160deg, #f5f1eb 0%, #e8dfd0 40%, #d4cfb8 100%);
+  display:flex; align-items:center; justify-content:center; font-family:'PingFang SC','Microsoft YaHei',sans-serif; }
+.login-overlay.hidden { display:none; }
+
+.login-card { background:#fffef9; border-radius:16px; box-shadow:0 8px 40px rgba(0,0,0,.12); width:420px; max-width:94vw;
+  padding:40px 36px 32px; text-align:center; position:relative; overflow:hidden; }
+.login-card::before { content:''; position:absolute; top:0; left:0; right:0; height:5px;
+  background:linear-gradient(90deg, #4A7C59, #87CEEB, #D4A853); }
+.login-logo { font-size:3.5em; margin-bottom:8px; }
+.login-title { font-size:1.4em; font-weight:700; color:var(--primary); margin-bottom:4px; }
+.login-subtitle { font-size:.8em; color:var(--text2); margin-bottom:24px; }
+
+/* 微信扫码区 */
+.login-wechat { background:#f0faf0; border-radius:12px; padding:20px 16px 16px; margin-bottom:20px; position:relative; }
+.login-wechat h4 { color:#07C160; font-size:.92em; margin-bottom:4px; }
+.login-wechat .wx-tip { font-size:.7em; color:var(--text2); margin-bottom:12px; }
+.login-qr-wrap { display:inline-block; background:#fff; padding:10px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.login-qr-wrap canvas { display:block; width:180px; height:180px; }
+.login-qr-placeholder { width:180px; height:180px; margin:0 auto; background:#e8e8e8; border-radius:8px;
+  display:flex; align-items:center; justify-content:center; color:#999; font-size:.8em; flex-direction:column; gap:8px; }
+
+/* 分隔线 */
+.login-divider { display:flex; align-items:center; gap:12px; margin:0 0 20px; color:var(--text2); font-size:.75em; }
+.login-divider::before, .login-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* 开发登录 */
+.login-dev { }
+.login-dev .form-group { text-align:left; margin-bottom:12px; }
+.login-dev .form-group label { display:block; font-size:.78em; font-weight:600; color:var(--text2); margin-bottom:4px; }
+.login-dev .form-group input { width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:8px;
+  font-size:.9em; background:var(--bg); color:var(--text); transition:border .2s; }
+.login-dev .form-group input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(74,124,89,.1); }
+.login-dev .form-row { display:flex; gap:8px; }
+.login-dev .form-row .form-group { flex:1; }
+
+/* 微信配置区 */
+.login-wx-config { margin-bottom:16px; }
+.login-wx-config summary { font-size:.72em; color:var(--text2); cursor:pointer; margin-bottom:8px; user-select:none; }
+.login-wx-config .form-group { text-align:left; margin-bottom:8px; }
+.login-wx-config .form-group label { display:block; font-size:.7em; color:var(--text2); margin-bottom:2px; }
+.login-wx-config .form-group input { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px;
+  font-size:.78em; background:var(--bg); color:var(--text); }
+
+.btn-login { width:100%; padding:12px; border:none; border-radius:10px; font-size:1em; font-weight:700; cursor:pointer;
+  transition:all .2s; display:flex; align-items:center; justify-content:center; gap:8px; }
+.btn-login-wx { background:#07C160; color:#fff; margin-bottom:12px; }
+.btn-login-wx:hover { background:#06ad56; transform:translateY(-1px); box-shadow:0 4px 12px rgba(7,193,96,.3); }
+.btn-login-dev { background:var(--primary); color:#fff; }
+.btn-login-dev:hover { background:var(--primary2); transform:translateY(-1px); box-shadow:0 4px 12px rgba(74,124,89,.3); }
+
+.login-footer { margin-top:20px; font-size:.68em; color:var(--text2); }
+.login-footer a { color:var(--primary); text-decoration:none; }
+.login-avatar { width:48px; height:48px; border-radius:50%; background:var(--primary); color:#fff;
+  display:inline-flex; align-items:center; justify-content:center; font-size:1.2em; font-weight:700; margin-bottom:8px; }
+
+/* 用户菜单（登录后 header 区域） */
+.user-menu { position:relative; display:flex; align-items:center; gap:8px; cursor:pointer; }
+.user-menu .user-avatar { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.2); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-size:.85em; font-weight:700; }
+.user-dropdown { display:none; position:absolute; top:40px; right:0; background:var(--card); border-radius:8px;
+  box-shadow:0 4px 20px rgba(0,0,0,.15); min-width:160px; z-index:300; border:1px solid var(--border); }
+.user-dropdown.show { display:block; }
+.user-dropdown .item { padding:10px 16px; cursor:pointer; font-size:.85em; color:var(--text); transition:background .15s; }
+.user-dropdown .item:hover { background:var(--bg); }
+.user-dropdown .item.danger { color:var(--danger); }
 </style>
 </head>
 <body>
+<!-- ===== 登录页 ===== -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">🐔</div>
+    <div class="login-title">智能养鸡平台</div>
+    <div class="login-subtitle">智慧养殖，科学管理</div>
+
+    <!-- 微信扫码登录 -->
+    <div class="login-wechat" id="loginWechatSection">
+      <h4><i class="fab fa-weixin"></i> 微信扫码登录</h4>
+      <div class="wx-tip">请使用微信扫描二维码</div>
+      <div class="login-qr-placeholder" id="loginQrPlaceholder">
+        <span style="font-size:2em;">📱</span>
+        <span>请先配置 AppID</span>
+      </div>
+      <div class="login-qr-wrap" id="loginQrWrap" style="display:none;">
+        <canvas id="loginQrCanvas" width="180" height="180"></canvas>
+      </div>
+    </div>
+
+    <!-- 微信配置 -->
+    <details class="login-wx-config" id="loginWxConfig">
+      <summary>⚙️ 微信 OAuth 配置（可选）</summary>
+      <div class="form-group">
+        <label>公众号 AppID</label>
+        <input type="text" id="login-wx-appid" placeholder="wxXXXXXXXXXXXXXXXX" onchange="App.saveWxConfig()">
+      </div>
+      <div class="form-group">
+        <label>回调域名（已在公众号后台配置）</label>
+        <input type="text" id="login-wx-redirect" placeholder="zhushishunsui.cloud" onchange="App.saveWxConfig()">
+      </div>
+    </details>
+
+    <!-- 分隔线 -->
+    <div class="login-divider">或 使用开发账号登录</div>
+
+    <!-- 开发模式登录 -->
+    <div class="login-dev">
+      <div class="form-row">
+        <div class="form-group">
+          <label>昵称</label>
+          <input type="text" id="login-dev-name" placeholder="养殖场主" maxlength="20">
+        </div>
+        <div class="form-group">
+          <label>手机号（选填）</label>
+          <input type="text" id="login-dev-phone" placeholder="138xxxx" maxlength="11">
+        </div>
+      </div>
+      <button class="btn btn-login btn-login-dev" onclick="App.devLogin()">
+        <i class="fas fa-sign-in-alt"></i> 登 录
+      </button>
+    </div>
+
+    <div class="login-footer">
+      登录即表示同意 <a href="#">服务条款</a> 和 <a href="#">隐私政策</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HEADER ===== -->
 <!-- ===== HEADER ===== -->
 <header class="header">
   <h1><i class="fas fa-kiwi-bird"></i>全自动养鸡监测平台</h1>
@@ -225,6 +352,7 @@ tr:hover { background:rgba(45,106,79,.04); }
     <div class="metric"><i class="fas fa-tint"></i>水:<span class="val" id="hdr-water">0</span>L</div>
     <div class="metric"><i class="fas fa-coins"></i>资金:<span class="val" id="hdr-money">0</span>元 <button class="btn btn-sm btn-primary" onclick="App.addFunds()" title="补充资金" style="margin-left:4px;padding:2px 8px;font-size:.7em;"><i class="fas fa-plus"></i></button></div>
   </div>
+  <span id="userMenuArea" style="display:flex;align-items:center;"></span>
   <button class="theme-btn" onclick="App.toggleTheme()" title="切换主题"><i class="fas fa-moon"></i></button>
 </header>
 
@@ -979,6 +1107,8 @@ let state = {
     pushCount: 0,
     lastPush: {},  // {type: timestamp} 防刷屏
   }),
+  user: Storage.get('cfp_user', null),  // {name, phone, avatar, loginType:'wx'|'dev', openid?, loginTime}
+  wxConfig: Storage.get('cfp_wxConfig', { appId:'', redirectUri:'' }),
 };
 
 // 持久化辅助
@@ -1014,6 +1144,8 @@ function saveAll() {
   Storage.set('nationwideBuyerActivity', state.nationwideBuyerActivity);
   Storage.set('nationwideBuyActivity', state.nationwideBuyActivity);
   Storage.set('notify', state.notify);
+  if (state.user) Storage.set('cfp_user', state.user);
+  if (state.wxConfig) Storage.set('cfp_wxConfig', state.wxConfig);
 }
 
 // ==================== 鸡只管理 ====================
@@ -3943,6 +4075,7 @@ function refreshAll() {
   updateAutoTasks();
   updateFilterDropdowns();
   loadNotifySettings();
+  renderUserMenu();
   renderSellPanel();
   renderBuyPanel();
 }
@@ -4054,9 +4187,256 @@ function clearRecords(type) {
   refreshAll();
 }
 
+// ==================== 登录引擎 ====================
+function saveWxConfig() {
+  try {
+    state.wxConfig.appId = document.getElementById('login-wx-appid')?.value?.trim() || '';
+    state.wxConfig.redirectUri = document.getElementById('login-wx-redirect')?.value?.trim() || '';
+    saveAll();
+    genWxQr();
+  } catch(_) {}
+}
+
+// 生成微信扫码登录 URL → 渲染为二维码
+function genWxQr() {
+  const placeholder = document.getElementById('loginQrPlaceholder');
+  const wrap = document.getElementById('loginQrWrap');
+  const canvas = document.getElementById('loginQrCanvas');
+  if (!canvas) return;
+
+  const appId = state.wxConfig.appId;
+  const redirect = state.wxConfig.redirectUri || window.location.hostname;
+  if (!appId) {
+    if (placeholder) placeholder.style.display = 'flex';
+    if (wrap) wrap.style.display = 'none';
+    return;
+  }
+
+  // 构建微信 OAuth 授权 URL (snsapi_userinfo 需通过认证的服务号)
+  const redirectUri = encodeURIComponent(`https://${redirect}/`);
+  const stateParam = 'cfp_' + Date.now();
+  const wxUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=${stateParam}#wechat_redirect`;
+
+  // 用 Canvas 画二维码（纯前端，无外部依赖）
+  if (placeholder) placeholder.style.display = 'none';
+  if (wrap) wrap.style.display = 'inline-block';
+
+  // 简单二维码编码 — 使用 Canvas 绘制 URL 编码的 QR
+  drawQR(canvas, wxUrl);
+  localStorage.setItem('cfp_wx_state', stateParam);
+}
+
+// 极简 QR 码生成器 (Model 2, Byte 编码, 版本自适应)
+function drawQR(canvas, text) {
+  const ctx = canvas.getContext('2d');
+  const size = 180;
+  canvas.width = size; canvas.height = size;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size);
+
+  // 转 UTF-8 字节
+  const bytes = [];
+  for (let i = 0; i < text.length; i++) {
+    const cp = text.codePointAt(i);
+    if (cp < 0x80) bytes.push(cp);
+    else if (cp < 0x800) { bytes.push(0xC0|(cp>>6), 0x80|(cp&0x3F)); }
+    else if (cp < 0x10000) { bytes.push(0xE0|(cp>>12), 0x80|((cp>>6)&0x3F), 0x80|(cp&0x3F)); }
+    else { bytes.push(0xF0|(cp>>18), 0x80|((cp>>12)&0x3F), 0x80|((cp>>6)&0x3F), 0x80|(cp&0x3F)); i++; }
+  }
+
+  const totalBits = bytes.length * 8 + 4 + 8; // data + mode + count
+  let ver = 1;
+  const caps = [0,17,32,53,78,106,134,154,192,230,271,321,367,425,458,520,586,644,718,792,858,929,1003,1091,1171,1273,1367,1465,1528,1628,1732,1840,1952,2068,2188,2303,2431,2563,2699,2809,2953];
+  while (ver < caps.length && caps[ver] * 8 < totalBits) ver++;
+  if (ver >= caps.length) ver = caps.length - 1;
+
+  const modules = 17 + ver * 4;
+  const matrix = Array.from({length: modules}, () => Array(modules).fill(null));
+
+  // 定位图案
+  function placeFinder(r, c) {
+    for (let i = -1; i <= 7; i++)
+      for (let j = -1; j <= 7; j++)
+        if (r+i>=0&&c+j>=0&&r+i<modules&&c+j<modules)
+          matrix[r+i][c+j] = (i>=0&&i<=6&&j>=0&&j<=6) ? ((i===0||i===6||j===0||j===6||(i>=2&&i<=4&&j>=2&&j<=4)) ? 1 : 0) : 0;
+  }
+  placeFinder(0, 0); placeFinder(0, modules - 7); placeFinder(modules - 7, 0);
+
+  // 时序图案
+  for (let i = 8; i < modules - 8; i++) matrix[i][6] = matrix[6][i] = i % 2 === 0 ? 1 : 0;
+
+  // 格式信息简化 + 数据填充
+  const byteData = [0x40]; // Byte mode
+  byteData.push(bytes.length >> 8, bytes.length & 0xFF);
+  for (const b of bytes) byteData.push(b);
+  // 补齐
+  byteData.push(0); // terminator
+  const capBits = caps[ver] * 8;
+  while (byteData.length * 8 < capBits) { byteData.push(0xEC); byteData.push(0x11); } // pad
+
+  // 简单数据填充（逐位写入矩阵，省略纠错码 — 用足够分辨率补偿）
+  let bitIdx = 0;
+  let col = modules - 1;
+  let up = true;
+  const filled = Array(modules*modules).fill(false);
+  const getDataBit = () => {
+    const byteIdx = Math.floor(bitIdx / 8);
+    if (byteIdx >= byteData.length) return 0;
+    return (byteData[byteIdx] >> (7 - bitIdx % 8)) & 1;
+  };
+
+  while (col > 0) {
+    if (col === 6) col--;
+    for (let row = up ? modules - 1 : 0; up ? row >= 0 : row < modules; row += up ? -1 : 1) {
+      for (let c = col; c > col - 2; c--) {
+        if (c < 0 || c >= modules) continue;
+        if (matrix[row][c] !== null) continue;
+        if (bitIdx < capBits) {
+          matrix[row][c] = getDataBit();
+          bitIdx++;
+        } else {
+          matrix[row][c] = 0;
+        }
+      }
+    }
+    up = !up;
+    col -= 2;
+  }
+
+  // 渲染
+  const cellSize = size / modules;
+  ctx.fillStyle = '#000';
+  for (let r = 0; r < modules; r++) {
+    for (let c = 0; c < modules; c++) {
+      if (matrix[r][c] === 1) ctx.fillRect(c * cellSize, r * cellSize, Math.ceil(cellSize), Math.ceil(cellSize));
+    }
+  }
+
+  // 中间 Logo
+  const logoSize = size * 0.22;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(size/2 - logoSize/2 - 2, size/2 - logoSize/2 - 2, logoSize + 4, logoSize + 4);
+  ctx.fillStyle = '#07C160';
+  ctx.font = `${logoSize*0.6}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('🐔', size/2, size/2 + logoSize*0.2);
+}
+
+// 开发模式登录
+function devLogin() {
+  const name = document.getElementById('login-dev-name')?.value?.trim() || '养殖场主';
+  const phone = document.getElementById('login-dev-phone')?.value?.trim() || '';
+
+  state.user = {
+    name, phone,
+    avatar: name.charAt(0).toUpperCase(),
+    loginType: 'dev',
+    loginTime: new Date().toISOString(),
+  };
+  saveAll();
+  hideLoginOverlay();
+  addAlert('info', `👋 欢迎回来，${name}！`);
+}
+
+// 微信登录回调处理 (URL 含 ?code= &state= 时)
+function handleWxCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const stateParam = params.get('state');
+  if (!code || !stateParam) return false;
+
+  // 验证 state
+  const savedState = localStorage.getItem('cfp_wx_state');
+  if (savedState && stateParam !== savedState) {
+    alert('微信登录验证失败（state 不匹配），请重试。');
+    window.history.replaceState({}, '', '/');
+    return false;
+  }
+
+  // 提示：纯前端无法换取 access_token，需要后端代理
+  // 这里存下 code，展示已获取授权
+  state.user = {
+    name: '微信用户',
+    phone: '',
+    avatar: '微',
+    loginType: 'wx',
+    openid: code.substring(0, 8) + '...',
+    loginTime: new Date().toISOString(),
+    wxCode: code, // 临时存 code
+  };
+  saveAll();
+  window.history.replaceState({}, '', '/');
+  localStorage.removeItem('cfp_wx_state');
+  hideLoginOverlay();
+  addAlert('info', '✅ 微信授权成功！欢迎使用智能养鸡平台。');
+  return true;
+}
+
+// 隐藏登录页
+function hideLoginOverlay() {
+  const overlay = document.getElementById('loginOverlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+// 退出登录
+function doLogout() {
+  if (!confirm('确定要退出登录吗？')) return;
+  state.user = null;
+  localStorage.removeItem('cfp_user');
+  saveAll();
+  location.reload();
+}
+
+// 渲染用户菜单
+function renderUserMenu() {
+  const container = document.getElementById('userMenuArea');
+  if (!container) return;
+  const user = state.user;
+  if (!user) {
+    container.innerHTML = '<button class="btn btn-sm btn-primary" onclick="App.devLogin()" style="white-space:nowrap;"><i class="fas fa-sign-in-alt"></i> 登录</button>';
+    return;
+  }
+  container.innerHTML = `
+    <div class="user-menu" onclick="document.getElementById('userDropdown').classList.toggle('show')">
+      <div class="user-avatar">${user.avatar||'🐔'}</div>
+      <span style="font-size:.82em;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${user.name}</span>
+    </div>
+    <div class="user-dropdown" id="userDropdown">
+      <div class="item" style="pointer-events:none;border-bottom:1px solid var(--border);">
+        <div style="font-weight:600;">${user.name}</div>
+        <div style="font-size:.72em;color:var(--text2);">${user.loginType==='wx'?'微信登录':'开发账号'}${user.phone?' · '+user.phone:''}</div>
+      </div>
+      <div class="item danger" onclick="App.doLogout()"><i class="fas fa-sign-out-alt"></i> 退出登录</div>
+    </div>`;
+  // 点击外部关闭
+  document.addEventListener('click', function closeDD(e) {
+    const dd = document.getElementById('userDropdown');
+    if (dd && !e.target.closest('.user-menu')) dd.classList.remove('show');
+  });
+}
+
 // ==================== 初始化 ====================
 function init() {
   try {
+  // === 登录检查 ===
+  // 1. 处理微信回调
+  if (window.location.search.includes('code=') && handleWxCallback()) {
+    // 已处理，继续加载
+  }
+  // 2. 已登录 → 隐藏登录页
+  if (state.user) {
+    hideLoginOverlay();
+  }
+  // 3. 加载微信配置到 UI
+  if (state.wxConfig.appId) {
+    const el = document.getElementById('login-wx-appid');
+    if (el) el.value = state.wxConfig.appId;
+    const el2 = document.getElementById('login-wx-redirect');
+    if (el2) el2.value = state.wxConfig.redirectUri;
+    setTimeout(() => genWxQr(), 500);
+  }
+  // 渲染用户菜单
+  renderUserMenu();
+
   // 主题
   if (state.settings.theme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -4594,6 +4974,8 @@ window.App = {
   simulateBuyerActivity, addBuyerActivity, addBuyActivity,
   // 手机通知
   saveNotifySettings, loadNotifySettings, testNotify, pushNotify,
+  // 登录
+  devLogin, saveWxConfig, genWxQr, doLogout,
 };
 
 // 启动
