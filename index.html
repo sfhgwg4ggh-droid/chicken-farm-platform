@@ -2769,6 +2769,8 @@ function renderNationwidePanel() {
   renderNationwideListings();
   updateNationwideStats();
   renderTransactions();
+  renderBuyerActivity();
+  updateBuyerOnlineCount();
   document.getElementById('nationwide-update-time').textContent = state.nationwideLastRefresh ? '更新于: ' + state.nationwideLastRefresh : '';
 }
 
