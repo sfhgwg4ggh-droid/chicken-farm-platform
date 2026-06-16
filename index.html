@@ -453,6 +453,16 @@ tr:hover { background:rgba(45,106,79,.04); }
     </div>
   </div>
 
+  <!-- 实时动态 -->
+  <div class="card" style="border-left:3px solid var(--accent);">
+    <h3><i class="fas fa-bolt pulse" style="color:var(--accent);"></i>实时动态
+      <span style="font-size:.75em;color:var(--text2);font-weight:400;margin-left:8px;">当前 <strong id="nw-online-buyers" style="color:var(--accent);">0</strong> 位买家在线</span>
+    </h3>
+    <div id="nw-activity-feed" style="max-height:160px;overflow-y:auto;font-size:.84em;line-height:2;padding:4px 0;">
+      <div style="color:var(--text2);">⏳ 实时动态加载中...</div>
+    </div>
+  </div>
+
   <!-- 我的挂牌 -->
   <div class="card">
     <h3><i class="fas fa-tag"></i>我的挂牌 <button class="btn btn-sm btn-primary" onclick="App.listReadyForSale()" style="margin-left:12px;"><i class="fas fa-bullhorn"></i>一键挂牌达标鸡</button></h3>
@@ -808,6 +818,7 @@ let state = {
   snapshots: Storage.get('snapshots', []),
   nationwideMarket: Storage.get('nationwideMarket', []),
   nationwideLastRefresh: Storage.get('nationwideLastRefresh', ''),
+  nationwideBuyerActivity: Storage.get('nationwideBuyerActivity', []),
   transactions: Storage.get('transactions', []),  // 交易记录 [{time, type, amount, balance, desc}]
 };
 
@@ -841,6 +852,7 @@ function saveAll() {
   Storage.set('nationwideMarket', state.nationwideMarket);
   Storage.set('nationwideLastRefresh', state.nationwideLastRefresh);
   Storage.set('transactions', state.transactions);
+  Storage.set('nationwideBuyerActivity', state.nationwideBuyerActivity);
 }
 
 // ==================== 鸡只管理 ====================
@@ -2625,9 +2637,13 @@ function renderNationwideListings() {
       <div style="font-size:.8em;color:var(--text2);margin-bottom:8px;">
         <div>📍 ${l.province} ${l.city}</div>
         <div>🏠 ${l.seller}</div>
+        <div style="margin-top:4px;display:flex;align-items:center;gap:6px;font-size:.75em;">
+          <span>👁️ <strong style="color:var(--primary);">${l.views||0}</strong>次浏览</span>
+          ${l.activeBuyers>0?`<span style="color:var(--accent);" class="pulse">🔴 ${l.activeBuyers}人正在看</span>`:''}
+        </div>
       </div>
       <button class="btn btn-primary" onclick="App.buyFromMarketplace('${l.id}')" style="width:100%;">
-        <i class="fas fa-shopping-cart"></i>购买
+        <i class="fas fa-shopping-cart"></i>${l.activeBuyers>0?'抢购':'购买'}
       </button>
     </div>`;
   }).join('');
@@ -2771,6 +2787,94 @@ function initNationwideFilters() {
 }
 
 // 时间友好显示
+// ==================== 买家实时模拟引擎 ====================
+const BUYER_ACTIONS = [
+  { tpl:'{buyer} 从 <strong>{province}</strong> 购入 {count}只{breed}，成交价 <strong style="color:var(--accent);">¥{price}</strong>', icon:'🛒' },
+  { tpl:'{buyer} 正在与 <strong>{seller}</strong> 洽谈 {breed}...', icon:'💬' },
+  { tpl:'{buyer} 收藏了 <strong>{seller}</strong> 的 {breed}', icon:'⭐' },
+  { tpl:'{buyer} 出价 ¥{bidPrice} 竞拍 <strong>{seller}</strong> 的 {breed}', icon:'🔨' },
+  { tpl:'<strong>{province}</strong> 一位匿名买家刚刚购买了 {count}只{breed}', icon:'👤' },
+  { tpl:'{buyer} 批量下单 {count}只{breed}，正等待 <strong>{seller}</strong> 确认', icon:'📋' },
+];
+
+function simulateBuyerActivity() {
+  if (!state.nationwideMarket || state.nationwideMarket.length === 0) return;
+
+  // 更新浏览计数
+  const now = Date.now();
+  state.nationwideMarket.forEach(l => {
+    l.views = (l.views || 0) + Math.floor(Math.random() * 3);
+    l.activeBuyers = Math.random() < 0.12 ? Math.floor(1 + Math.random() * 4) : 0;
+    // 首次挂牌时间戳
+    if (!l._listedTs) l._listedTs = l.listedTime || now;
+  });
+
+  // 随机自动成交（约 5% 概率每次）
+  if (state.nationwideMarket.length > 30 && Math.random() < 0.08) {
+    const idx = Math.floor(Math.random() * state.nationwideMarket.length);
+    const l = state.nationwideMarket[idx];
+    if (l) {
+      const buyer = SELLERS[Math.floor(Math.random() * SELLERS.length)];
+      addBuyerActivity({ buyer, breed: l.breedName, province: l.province, seller: l.seller, price: l.totalPrice.toFixed(0), count: 1, tpl: '{buyer} 从 <strong>{province}</strong> 购入 {count}只{breed}，成交价 <strong style="color:var(--accent);">¥{price}</strong>', icon: '🛒' });
+      state.nationwideMarket.splice(idx, 1);
+    }
+  }
+
+  // 随机添加活动
+  if (Math.random() < 0.5 && state.nationwideMarket.length > 0) {
+    const l = state.nationwideMarket[Math.floor(Math.random() * state.nationwideMarket.length)];
+    if (l) {
+      const buyer = SELLERS[Math.floor(Math.random() * SELLERS.length)];
+      const action = BUYER_ACTIONS[Math.floor(Math.random() * BUYER_ACTIONS.length)];
+      let tpl = action.tpl;
+      tpl = tpl.replace('{buyer}', buyer);
+      tpl = tpl.replace('{seller}', l.seller);
+      tpl = tpl.replace('{breed}', l.breedName);
+      tpl = tpl.replace('{province}', l.province);
+      tpl = tpl.replace('{price}', l.totalPrice.toFixed(0));
+      tpl = tpl.replace('{count}', String(Math.floor(1 + Math.random() * 5)));
+      tpl = tpl.replace('{bidPrice}', (l.totalPrice * (0.85 + Math.random() * 0.25)).toFixed(0));
+      addBuyerActivity({ tpl, icon: action.icon });
+    }
+  }
+
+  updateBuyerOnlineCount();
+}
+
+function addBuyerActivity(act) {
+  state.nationwideBuyerActivity = state.nationwideBuyerActivity || [];
+  state.nationwideBuyerActivity.unshift({
+    time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    icon: act.icon || '🔔',
+    html: act.tpl,
+    ts: Date.now(),
+  });
+  if (state.nationwideBuyerActivity.length > 100) state.nationwideBuyerActivity.length = 100;
+  renderBuyerActivity();
+}
+
+function renderBuyerActivity() {
+  const feed = document.getElementById('nw-activity-feed');
+  if (!feed) return;
+  const acts = (state.nationwideBuyerActivity || []).slice(0, 30);
+  if (acts.length === 0) {
+    feed.innerHTML = '<div style="color:var(--text2);">🕐 等待买家上线...</div>';
+    return;
+  }
+  feed.innerHTML = acts.map((a, i) => `<div ${i===0?'class="fade-in"':''} style="padding:2px 0;border-bottom:1px solid var(--border);">
+    <span style="color:var(--text2);font-size:.75em;">${a.time}</span>
+    ${a.icon} ${a.html}
+  </div>`).join('');
+}
+
+function updateBuyerOnlineCount() {
+  const el = document.getElementById('nw-online-buyers');
+  if (!el) return;
+  const count = 3 + Math.floor(Math.random() * 8);
+  el.textContent = count;
+}
+
+// ==================== 时间辅助 ====================
 function getTimeAgo(timestamp) {
   const diff = Date.now() - timestamp;
   const mins = Math.floor(diff / 60000);
@@ -3747,6 +3851,30 @@ function init() {
     state.nationwideMarket = generateNationwideMarket();
     state.nationwideLastRefresh = new Date().toLocaleString('zh-CN');
     saveAll();
+  } else {
+    // 给已有数据补上浏览计数
+    state.nationwideMarket.forEach(l => {
+      l.views = l.views || Math.floor(Math.random() * 50);
+      l._listedTs = l._listedTs || l.listedTime || Date.now();
+    });
+  }
+
+  // 种子活动（首次加载）
+  if (!state.nationwideBuyerActivity || state.nationwideBuyerActivity.length === 0) {
+    state.nationwideBuyerActivity = [];
+    const seedActs = [
+      { icon:'🛒', tpl:'河南牧原禽业 从 <strong>山东</strong> 购入 3只白羽肉鸡(AA+)，成交价 <strong style="color:var(--accent);">¥68</strong>' },
+      { icon:'💬', tpl:'广东温氏禽业 正在与 <strong>四川新希望养殖</strong> 洽谈 黄羽肉鸡(快大型)...' },
+      { icon:'⭐', tpl:'江苏立华牧业 收藏了 <strong>河北大午养鸡场</strong> 的 海兰褐蛋鸡' },
+      { icon:'📋', tpl:'辽宁禾丰牧业 批量下单 5只京红1号蛋鸡，正等待 <strong>广西金陵农牧</strong> 确认' },
+    ];
+    seedActs.forEach((a, i) => {
+      state.nationwideBuyerActivity.push({
+        time: new Date(Date.now() - (seedActs.length - i) * 45000).toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit', second:'2-digit' }),
+        icon: a.icon, html: a.tpl, ts: Date.now() - (seedActs.length - i) * 45000,
+      });
+    });
+    saveAll();
   }
 
   // 初次渲染
@@ -3829,6 +3957,19 @@ function init() {
     if (++_saveCounter % 5 === 0) saveAll();
   }, 1000);
 
+  // 买家实时模拟 (每15秒)
+  let _nwSimCounter = 0;
+  setInterval(() => {
+    const nwPanel = document.getElementById('tab-nationwide');
+    if (!nwPanel || !nwPanel.classList.contains('active')) return;
+    simulateBuyerActivity();
+    if (++_nwSimCounter % 4 === 0) { // 每60秒刷浏览计数
+      state.nationwideMarket.forEach(l => { l.views = (l.views || 0) + Math.floor(Math.random() * 5); });
+      renderNationwideListings();
+    }
+    if (_nwSimCounter % 8 === 0) saveAll();
+  }, 15000);
+
   // 每天更新体重记录 (每10分钟检查)
   setInterval(() => {
     const today = new Date().toISOString().slice(0,10);
@@ -3896,6 +4037,8 @@ window.App = {
   buyFromMarketplace, filterNationwide, renderNationwidePanel, refreshNationwideMarket,
   // 资金管理
   setFunds, addFundsDirect, addFundsDirectCustom,
+  // 买家模拟
+  simulateBuyerActivity, addBuyerActivity,
 };
 
 // 启动
