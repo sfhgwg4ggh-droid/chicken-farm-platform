@@ -131,6 +131,62 @@ tr:hover { background:rgba(45,106,79,.04); }
 .quick-stat { flex:1; min-width:120px; background:var(--bg); padding:10px; border-radius:8px; text-align:center; }
 .quick-stat .num { font-size:1.4em; font-weight:700; color:var(--primary); }
 .quick-stat .label { font-size:.78em; color:var(--text2); }
+
+/* ========== 桌宠小鸡 ========== */
+.desk-pet { position:fixed; bottom:20px; right:20px; width:140px; height:180px; cursor:grab; z-index:99999; transition:filter .3s; }
+.desk-pet:active { cursor:grabbing; }
+.desk-pet.dragging { filter:drop-shadow(0 4px 16px rgba(0,0,0,.18)); }
+
+.dp-chicken { position:relative; width:120px; height:140px; margin:0 auto; animation:dp-idle 2.4s ease-in-out infinite; }
+.dp-body { position:absolute; bottom:14px; left:50%; transform:translateX(-50%); width:88px; height:78px;
+  background:linear-gradient(175deg,#FDE68A 0%,#F9E076 40%,#E8C84A 100%); border-radius:50% 50% 45% 45%;
+  box-shadow:inset 0 -6px 12px rgba(180,140,30,.15),inset 0 3px 6px rgba(255,255,255,.3),0 2px 6px rgba(0,0,0,.06); z-index:2; }
+.dp-body::after { content:''; position:absolute; bottom:6px; left:18px; width:50px; height:36px;
+  background:radial-gradient(ellipse,rgba(255,252,235,.65) 0%,transparent 70%); border-radius:50%; }
+
+.dp-head { position:absolute; top:0; left:50%; transform:translateX(-50%); width:62px; height:58px;
+  background:linear-gradient(175deg,#FDE68A 0%,#F9E076 55%,#E8C84A 100%); border-radius:50%; z-index:5;
+  box-shadow:inset 0 3px 5px rgba(255,255,255,.28); animation:dp-tilt 5s ease-in-out infinite; }
+.dp-comb { position:absolute; top:-12px; left:50%; transform:translateX(-50%); z-index:6; }
+.dp-comb span { position:absolute; background:#E85D3A; border-radius:50% 50% 30% 30%; box-shadow:inset 0 -2px 3px rgba(0,0,0,.1); }
+.dp-comb span:nth-child(1) { width:16px; height:20px; left:-2px; top:-3px; }
+.dp-comb span:nth-child(2) { width:14px; height:23px; left:10px; top:-9px; }
+.dp-comb span:nth-child(3) { width:12px; height:16px; left:22px; top:-1px; }
+.dp-wattle { position:absolute; bottom:-16px; left:50%; transform:translateX(-50%);
+  width:12px; height:15px; background:#E85D3A; border-radius:50%; z-index:7; opacity:.8; }
+.dp-eye { position:absolute; top:16px; width:14px; height:16px; background:#FFFEF8; border-radius:50%;
+  box-shadow:inset 0 0 2px rgba(0,0,0,.06); z-index:7; }
+.dp-eye.l { left:4px; } .dp-eye.r { right:4px; }
+.dp-pupil { position:absolute; width:7px; height:8px; background:#1a1a1a; border-radius:50%; top:5px; left:4px; }
+.dp-pupil::after { content:''; position:absolute; width:3px; height:3px; background:#fff; border-radius:50%; top:1px; left:1px; }
+.dp-beak { position:absolute; top:28px; left:50%; transform:translateX(-50%); width:0; height:0;
+  border-left:7px solid transparent; border-right:7px solid transparent; border-top:9px solid #F0A030; z-index:8; }
+.dp-blush { position:absolute; top:25px; width:10px; height:6px; background:rgba(255,150,130,.4); border-radius:50%; z-index:6; filter:blur(1.5px); }
+.dp-blush.l { left:16px; } .dp-blush.r { right:16px; }
+.dp-wing { position:absolute; bottom:42px; width:28px; height:38px;
+  background:linear-gradient(180deg,#FDE68A 0%,#E8C84A 100%); border-radius:60% 40% 50% 50%; z-index:4;
+  box-shadow:0 1px 3px rgba(0,0,0,.05); transform-origin:top center; animation:dp-flutter 3s ease-in-out infinite; }
+.dp-wing.l { left:22px; animation-delay:0s; } .dp-wing.r { right:22px; animation-delay:1.5s; }
+.dp-feet { position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:48px; z-index:3; }
+.dp-foot { position:absolute; bottom:0; width:3px; height:12px; background:#E8923A; border-radius:2px; }
+.dp-foot.l { left:8px; } .dp-foot.m { left:22px; } .dp-foot.r { left:36px; }
+
+@keyframes dp-idle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+@keyframes dp-tilt { 0%,45%,55%,100%{transform:translateX(-50%) rotate(0)} 48%{transform:translateX(-50%) rotate(-4deg)} 52%{transform:translateX(-50%) rotate(4deg)} }
+@keyframes dp-flutter { 0%,90%,100%{transform:rotate(0)} 93%{transform:rotate(-15deg)} 96%{transform:rotate(7deg)} }
+
+/* 桌宠气泡 */
+.dp-bubble { position:absolute; bottom:155px; left:50%; transform:translateX(-50%);
+  background:#fffef8; border-radius:12px; padding:10px 14px; box-shadow:0 2px 12px rgba(0,0,0,.1);
+  font-size:.78em; color:var(--text); white-space:nowrap; max-width:220px; opacity:0; pointer-events:none;
+  transition:opacity .3s; border:1px solid rgba(180,150,80,.2); }
+.dp-bubble::after { content:''; position:absolute; bottom:-8px; left:50%; transform:translateX(-50%);
+  width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent; border-top:8px solid #fffef8; }
+.dp-bubble.show { opacity:1; }
+.dp-bubble .dp-icon { font-size:1.5em; display:block; margin-bottom:2px; }
+.dp-bubble .dp-time { font-size:.7em; color:var(--text2); margin-top:3px; display:block; }
+
+@media (max-width:600px) { .desk-pet { transform:scale(.75); bottom:4px; right:4px; } }
 </style>
 </head>
 <body>
@@ -4121,6 +4177,9 @@ function init() {
     saveAll();
   }, 600000);
 
+  // 启动桌宠
+  initDeskPet();
+
   console.log('🐔 全自动化养鸡监测平台 v2.0 已启动');
   console.log('📋 功能清单: 鸡群管理 | 行情交易 | 统计报表 | 天气预报 | 大棚监测 | 自动化');
   console.log('💾 所有数据存储在浏览器 localStorage (cfp_* 键)');
@@ -4129,6 +4188,155 @@ function init() {
     console.error('init() error:', e.message, e.stack);
     alert('启动失败: ' + e.message);
   }
+}
+
+// ==================== 桌宠引擎 ====================
+function initDeskPet() {
+  const petEl = document.getElementById('deskPet');
+  const chicken = document.getElementById('dpChicken');
+  const bubble = document.getElementById('dpBubble');
+  if (!petEl || !bubble) return;
+
+  // 位置状态
+  let pet = { x:NaN, y:NaN, dragging:false, ox:0, oy:0 };
+  try {
+    const saved = JSON.parse(localStorage.getItem('cfp_pet_pos'));
+    if (saved) { pet.x = saved.x; pet.y = saved.y; }
+  } catch (_) {}
+  if (isNaN(pet.x)) { pet.x = window.innerWidth - 160; pet.y = window.innerHeight - 220; }
+
+  function savePos() {
+    try { localStorage.setItem('cfp_pet_pos', JSON.stringify({x:pet.x, y:pet.y})); } catch (_) {}
+  }
+
+  function clampPos() {
+    pet.x = Math.max(0, Math.min(pet.x, window.innerWidth - 140));
+    pet.y = Math.max(0, Math.min(pet.y, window.innerHeight - 180));
+    petEl.style.left = pet.x + 'px';
+    petEl.style.top = pet.y + 'px';
+    petEl.style.right = 'auto';
+    petEl.style.bottom = 'auto';
+  }
+  clampPos();
+
+  // 气泡说话
+  let bubbleTimer;
+  function say(html, duration) {
+    clearTimeout(bubbleTimer);
+    bubble.innerHTML = html;
+    bubble.classList.add('show');
+    bubbleTimer = setTimeout(() => bubble.classList.remove('show'), duration || 5000);
+  }
+
+  // 天气播报 — 读取平台天气数据
+  function reportWeather() {
+    const city = (() => { try { return localStorage.getItem('cfp_selectedCity') || '商洛'; } catch(_) { return '商洛'; } })();
+    const cacheKey = 'cfp_weatherCache';
+    let weather = null;
+    try {
+      const cache = JSON.parse(localStorage.getItem(cacheKey) || '{}');
+      weather = cache[city];
+    } catch (_) {}
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+    const timeStr = now.toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit' });
+
+    if (weather) {
+      const tempIcon = weather.temp > 30 ? '🔥' : weather.temp < 10 ? '❄️' : '🌡️';
+      const condIcon = { '晴':'☀️','多云':'⛅','阴':'☁️','小雨':'🌧️','中雨':'🌧️','大雨':'🌧️','雷阵雨':'⛈️','雪':'❄️','雾':'🌫️','霾':'😷' };
+      const icon = condIcon[weather.condition] || '🌤️';
+      say(`<span class="dp-icon">${icon}</span><strong>${city}</strong> · ${weather.condition}<br>${tempIcon} <strong>${weather.temp}°C</strong> &nbsp;💧 ${weather.humidity}% &nbsp;🌬️ ${weather.windSpeed}m/s<span class="dp-time">${dateStr} ${timeStr}</span>`, 8000);
+    } else {
+      say(`<span class="dp-icon">🐔</span><strong>${city}</strong><br>天气数据加载中...<span class="dp-time">${dateStr} ${timeStr}</span>`, 5000);
+    }
+  }
+
+  // 随机小贴士
+  const tips = [
+    '咯咯咯~ 记得检查温湿度哦！', '小鸡们需要新鲜空气~', '饲料够不够呀？', '今天也要好好养鸡！',
+    '该喂食啦！🍚', '天气变化要注意保暖', '鸡舍通风很重要哦', '记得打疫苗！💉',
+    '清洁鸡舍很重要~', '今天鸡蛋价格不错哦', '加油加油！💪', '咯咯哒！产蛋啦~🥚',
+    '中午记得给鸡舍遮阳', '晚上关好门窗哦~', '定期检查饮水系统', '看看行情再卖鸡！',
+  ];
+
+  // 定时播报 (初始播报 + 每 10 分钟)
+  setTimeout(() => reportWeather(), 3000);
+  setInterval(() => reportWeather(), 600000);
+
+  // 随机说话 (每 60-120 秒)
+  let tipTimer;
+  function scheduleTip() {
+    tipTimer = setTimeout(() => {
+      const tip = tips[Math.floor(Math.random() * tips.length)];
+      say(`<span class="dp-icon">🐤</span>${tip}`, 3500);
+      scheduleTip();
+    }, 60000 + Math.random() * 60000);
+  }
+  scheduleTip();
+
+  // 点击桌宠 → 立即播报天气
+  petEl.addEventListener('click', (e) => {
+    if (pet.dragging) return;
+    clearTimeout(tipTimer);
+    reportWeather();
+    scheduleTip();
+  });
+
+  // 双击 → 返回默认位置
+  petEl.addEventListener('dblclick', () => {
+    pet.x = window.innerWidth - 160;
+    pet.y = window.innerHeight - 220;
+    clampPos();
+    savePos();
+    say('<span class="dp-icon">🏠</span>回到这里啦~', 2000);
+  });
+
+  // 拖拽
+  petEl.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    pet.dragging = true;
+    pet.ox = e.clientX - pet.x;
+    pet.oy = e.clientY - pet.y;
+    petEl.classList.add('dragging');
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!pet.dragging) return;
+    pet.x = e.clientX - pet.ox;
+    pet.y = e.clientY - pet.oy;
+    clampPos();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!pet.dragging) return;
+    pet.dragging = false;
+    petEl.classList.remove('dragging');
+    savePos();
+  });
+
+  // 触摸拖拽 (移动端)
+  petEl.addEventListener('touchstart', (e) => {
+    pet.dragging = true;
+    pet.ox = e.touches[0].clientX - pet.x;
+    pet.oy = e.touches[0].clientY - pet.y;
+    petEl.classList.add('dragging');
+  }, {passive:false});
+  document.addEventListener('touchmove', (e) => {
+    if (!pet.dragging) return;
+    pet.x = e.touches[0].clientX - pet.ox;
+    pet.y = e.touches[0].clientY - pet.oy;
+    clampPos();
+  }, {passive:false});
+  document.addEventListener('touchend', () => {
+    if (!pet.dragging) return;
+    pet.dragging = false;
+    petEl.classList.remove('dragging');
+    savePos();
+  });
+
+  console.log('🐤 桌宠小助手已就绪');
 }
 
 // ==================== 暴露全局 API ====================
@@ -4168,5 +4376,26 @@ window.App = {
 // 启动
 document.addEventListener('DOMContentLoaded', init);
 </script>
+
+<!-- ========== 桌宠小鸡 ========== -->
+<div class="desk-pet" id="deskPet" title="🐔 小助手 — 点击查看天气">
+  <div class="dp-bubble" id="dpBubble"></div>
+  <div class="dp-chicken" id="dpChicken">
+    <div class="dp-head">
+      <div class="dp-comb"><span></span><span></span><span></span></div>
+      <div class="dp-wattle"></div>
+      <div class="dp-eye l"><div class="dp-pupil"></div></div>
+      <div class="dp-eye r"><div class="dp-pupil"></div></div>
+      <div class="dp-blush l"></div><div class="dp-blush r"></div>
+      <div class="dp-beak"></div>
+    </div>
+    <div class="dp-body"></div>
+    <div class="dp-wing l"></div><div class="dp-wing r"></div>
+    <div class="dp-feet">
+      <div class="dp-foot l"></div><div class="dp-foot m"></div><div class="dp-foot r"></div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
