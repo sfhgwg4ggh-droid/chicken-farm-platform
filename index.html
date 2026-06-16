@@ -157,7 +157,8 @@ tr:hover { background:rgba(45,106,79,.04); }
   <button class="tab-btn" data-tab="tab-monitor"><i class="fas fa-satellite-dish"></i>监控通道</button>
 	  <button class="tab-btn" data-tab="tab-camera"><i class="fas fa-video"></i>视频监控</button>
 	  <button class="tab-btn" data-tab="tab-auto"><i class="fas fa-cogs"></i>自动化</button>
-	  <button class="tab-btn" data-tab="tab-nationwide"><i class="fas fa-globe"></i>全国卖鸡</button>
+	  <button class="tab-btn" data-tab="tab-sell"><i class="fas fa-tag"></i>出售</button>
+	  <button class="tab-btn" data-tab="tab-buy"><i class="fas fa-shopping-cart"></i>购买</button>
 </nav>
 
 <!-- ===== TAB 1: 鸡群管理 ===== -->
@@ -435,14 +436,14 @@ tr:hover { background:rgba(45,106,79,.04); }
   </div>
 </div>
 
-<!-- ===== TAB 9: 全国卖鸡 ===== -->
-<div class="tab-panel" id="tab-nationwide">
+<!-- ===== TAB 9: 出售 ===== -->
+<div class="tab-panel" id="tab-sell">
   <!-- 资金管理 -->
   <div class="card" style="background:linear-gradient(135deg, rgba(74,124,89,.08), rgba(212,168,83,.08));">
     <h3><i class="fas fa-wallet"></i>资金管理</h3>
     <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
       <div style="flex:1;min-width:160px;">
-        <div style="font-size:2em;font-weight:700;color:var(--primary);" id="nw-balance">¥0.00</div>
+        <div style="font-size:2em;font-weight:700;color:var(--primary);" id="sell-balance">¥0.00</div>
         <div style="font-size:.8em;color:var(--text2);">当前余额</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -450,16 +451,6 @@ tr:hover { background:rgba(45,106,79,.04); }
         <button class="btn btn-success" onclick="App.addFundsDirect()"><i class="fas fa-plus"></i>补充 10000</button>
         <button class="btn btn-warn" onclick="App.addFundsDirectCustom()"><i class="fas fa-coins"></i>自定义补充</button>
       </div>
-    </div>
-  </div>
-
-  <!-- 实时动态 -->
-  <div class="card" style="border-left:3px solid var(--accent);">
-    <h3><i class="fas fa-bolt pulse" style="color:var(--accent);"></i>实时动态
-      <span style="font-size:.75em;color:var(--text2);font-weight:400;margin-left:8px;">当前 <strong id="nw-online-buyers" style="color:var(--accent);">0</strong> 位买家在线</span>
-    </h3>
-    <div id="nw-activity-feed" style="max-height:160px;overflow-y:auto;font-size:.84em;line-height:2;padding:4px 0;">
-      <div style="color:var(--text2);">⏳ 实时动态加载中...</div>
     </div>
   </div>
 
@@ -471,39 +462,71 @@ tr:hover { background:rgba(45,106,79,.04); }
     </tr></thead><tbody id="my-listings-body"><tr><td colspan="7" style="text-align:center;color:var(--text2);">暂无挂牌</td></tr></tbody></table></div>
   </div>
 
-  <!-- 全国鸡源 -->
+  <!-- 卖鸡动态 -->
+  <div class="card" style="border-left:3px solid var(--accent);">
+    <h3><i class="fas fa-bolt pulse" style="color:var(--accent);"></i>卖鸡动态
+      <span style="font-size:.75em;color:var(--text2);font-weight:400;margin-left:8px;">当前 <strong id="sell-online-buyers" style="color:var(--accent);">0</strong> 位买家在线</span>
+    </h3>
+    <div id="sell-activity-feed" style="max-height:160px;overflow-y:auto;font-size:.84em;line-height:2;padding:4px 0;">
+      <div style="color:var(--text2);">⏳ 卖鸡动态加载中...</div>
+    </div>
+  </div>
+
+  <!-- 卖鸡交易记录 -->
+  <div class="card">
+    <h3><i class="fas fa-history"></i>交易记录 <button class="btn btn-sm btn-outline" onclick="App.clearRecords('transactions')" style="margin-left:8px;"><i class="fas fa-eraser"></i>清空</button></h3>
+    <div class="table-wrap" style="max-height:240px;overflow-y:auto;">
+      <table><thead><tr><th>时间</th><th>类型</th><th>金额(元)</th><th>余额(元)</th><th>说明</th></tr></thead>
+      <tbody id="sell-transaction-log"><tr><td colspan="5" style="text-align:center;color:var(--text2);">暂无交易记录</td></tr></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 10: 购买 ===== -->
+<div class="tab-panel" id="tab-buy">
+  <!-- 全国鸡源市场 -->
   <div class="card">
     <h3><i class="fas fa-globe-asia"></i>全国鸡源市场
       <button class="btn btn-sm btn-primary" id="btn-refresh-nationwide" onclick="App.refreshNationwideMarket()" style="margin-left:12px;"><i class="fas fa-sync-alt"></i>刷新市场</button>
-      <span style="font-size:.75em;color:var(--text2);margin-left:8px;" id="nationwide-update-time"></span>
+      <span style="font-size:.75em;color:var(--text2);margin-left:8px;" id="buy-update-time"></span>
     </h3>
     <div class="form-row" style="margin-bottom:12px;">
-      <div class="form-group"><label>品种</label><select id="nw-filter-breed" onchange="App.filterNationwide()"><option value="all">全部品种</option></select></div>
-      <div class="form-group"><label>省份</label><select id="nw-filter-province" onchange="App.filterNationwide()"><option value="all">全国</option></select></div>
-      <div class="form-group"><label>价格区间</label><select id="nw-filter-price" onchange="App.filterNationwide()"><option value="all">不限</option><option value="0-50">50元以下</option><option value="50-100">50-100元</option><option value="100-200">100-200元</option><option value="200-500">200-500元</option><option value="500">500元以上</option></select></div>
-      <div class="form-group"><label>排序</label><select id="nw-filter-sort" onchange="App.filterNationwide()"><option value="price-asc">价格低→高</option><option value="price-desc">价格高→低</option><option value="age-asc">日龄小→大</option></select></div>
+      <div class="form-group"><label>品种</label><select id="buy-filter-breed" onchange="App.filterNationwide()"><option value="all">全部品种</option></select></div>
+      <div class="form-group"><label>省份</label><select id="buy-filter-province" onchange="App.filterNationwide()"><option value="all">全国</option></select></div>
+      <div class="form-group"><label>价格区间</label><select id="buy-filter-price" onchange="App.filterNationwide()"><option value="all">不限</option><option value="0-50">50元以下</option><option value="50-100">50-100元</option><option value="100-200">100-200元</option><option value="200-500">200-500元</option><option value="500">500元以上</option></select></div>
+      <div class="form-group"><label>排序</label><select id="buy-filter-sort" onchange="App.filterNationwide()"><option value="price-asc">价格低→高</option><option value="price-desc">价格高→低</option><option value="age-asc">日龄小→大</option></select></div>
     </div>
     <div class="grid3" id="nationwide-listings-grid"></div>
+  </div>
+
+  <!-- 买鸡动态 -->
+  <div class="card" style="border-left:3px solid var(--primary);">
+    <h3><i class="fas fa-fire pulse" style="color:var(--primary);"></i>买鸡动态
+      <span style="font-size:.75em;color:var(--text2);font-weight:400;margin-left:8px;">当前 <strong id="buy-online" style="color:var(--primary);">0</strong> 人在浏览</span>
+    </h3>
+    <div id="buy-activity-feed" style="max-height:160px;overflow-y:auto;font-size:.84em;line-height:2;padding:4px 0;">
+      <div style="color:var(--text2);">⏳ 买鸡动态加载中...</div>
+    </div>
   </div>
 
   <!-- 市场统计 -->
   <div class="grid2">
     <div class="card">
       <h3><i class="fas fa-chart-bar"></i>各省鸡源分布</h3>
-      <canvas id="chart-nationwide-province" height="240"></canvas>
+      <canvas id="chart-buy-province" height="240"></canvas>
     </div>
     <div class="card">
       <h3><i class="fas fa-info-circle"></i>市场概览</h3>
-      <div class="quick-stats" id="nationwide-stats"></div>
+      <div class="quick-stats" id="buy-stats"></div>
     </div>
   </div>
 
-  <!-- 交易记录 -->
+  <!-- 购买交易记录 -->
   <div class="card">
     <h3><i class="fas fa-history"></i>交易记录 <button class="btn btn-sm btn-outline" onclick="App.clearRecords('transactions')" style="margin-left:8px;"><i class="fas fa-eraser"></i>清空</button></h3>
     <div class="table-wrap" style="max-height:240px;overflow-y:auto;">
       <table><thead><tr><th>时间</th><th>类型</th><th>金额(元)</th><th>余额(元)</th><th>说明</th></tr></thead>
-      <tbody id="transaction-log-body"><tr><td colspan="5" style="text-align:center;color:var(--text2);">暂无交易记录</td></tr></tbody></table>
+      <tbody id="buy-transaction-log"><tr><td colspan="5" style="text-align:center;color:var(--text2);">暂无交易记录</td></tr></tbody></table>
     </div>
   </div>
 </div>
@@ -819,6 +842,7 @@ let state = {
   nationwideMarket: Storage.get('nationwideMarket', []),
   nationwideLastRefresh: Storage.get('nationwideLastRefresh', ''),
   nationwideBuyerActivity: Storage.get('nationwideBuyerActivity', []),
+  nationwideBuyActivity: Storage.get('nationwideBuyActivity', []),
   transactions: Storage.get('transactions', []),  // 交易记录 [{time, type, amount, balance, desc}]
 };
 
@@ -853,6 +877,7 @@ function saveAll() {
   Storage.set('nationwideLastRefresh', state.nationwideLastRefresh);
   Storage.set('transactions', state.transactions);
   Storage.set('nationwideBuyerActivity', state.nationwideBuyerActivity);
+  Storage.set('nationwideBuyActivity', state.nationwideBuyActivity);
 }
 
 // ==================== 鸡只管理 ====================
@@ -2569,7 +2594,7 @@ function buyFromMarketplace(listingId) {
   state.nationwideMarket = state.nationwideMarket.filter(l => l.id !== listingId);
   addAlert('success', `✅ 成功购买「${listing.breedName}」(${listing.province})，花费 ${listing.totalPrice.toFixed(2)} 元，已加入鸡群 (${newId})。`);
   saveAll();
-  renderNationwidePanel();
+  renderSellPanel();
   refreshAll();
 }
 
@@ -2583,10 +2608,10 @@ function renderNationwideListings() {
   const container = document.getElementById('nationwide-listings-grid');
   if (!container) return;
 
-  const filterBreed = document.getElementById('nw-filter-breed')?.value || 'all';
-  const filterProvince = document.getElementById('nw-filter-province')?.value || 'all';
-  const filterPrice = document.getElementById('nw-filter-price')?.value || 'all';
-  const filterSort = document.getElementById('nw-filter-sort')?.value || 'price-asc';
+  const filterBreed = document.getElementById('buy-filter-breed')?.value || 'all';
+  const filterProvince = document.getElementById('buy-filter-province')?.value || 'all';
+  const filterPrice = document.getElementById('buy-filter-price')?.value || 'all';
+  const filterSort = document.getElementById('buy-filter-sort')?.value || 'price-asc';
 
   let list = [...state.nationwideMarket];
 
@@ -2680,7 +2705,7 @@ function renderMyListings() {
 
 // 更新市场统计
 function updateNationwideStats() {
-  const statsEl = document.getElementById('nationwide-stats');
+  const statsEl = document.getElementById('buy-stats');
   if (!statsEl) return;
   const list = state.nationwideMarket;
   if (list.length === 0) {
@@ -2703,7 +2728,7 @@ function updateNationwideStats() {
   `;
 
   // 省份分布图
-  const ctx = document.getElementById('chart-nationwide-province');
+  const ctx = document.getElementById('chart-buy-province');
   if (!ctx) return;
   const sortedProvs = Object.entries(provCount).sort((a, b) => b[1] - a[1]).slice(0, 15);
   if (window._nwProvChart) window._nwProvChart.destroy();
@@ -2731,15 +2756,15 @@ function updateNationwideStats() {
 function refreshNationwideMarket() {
   state.nationwideMarket = generateNationwideMarket();
   state.nationwideLastRefresh = new Date().toLocaleString('zh-CN');
-  document.getElementById('nationwide-update-time').textContent = '更新于: ' + state.nationwideLastRefresh;
+  document.getElementById('buy-update-time').textContent = '更新于: ' + state.nationwideLastRefresh;
   addAlert('info', `🛒 全国鸡源已刷新，共 ${state.nationwideMarket.length} 条挂牌。`);
   saveAll();
-  renderNationwidePanel();
+  renderBuyPanel();
 }
 
 // 渲染交易记录
-function renderTransactions() {
-  const tbody = document.getElementById('transaction-log-body');
+function renderSellTransactions() {
+  const tbody = document.getElementById('sell-transaction-log');
   if (!tbody) return;
   if (state.transactions.length === 0) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text2);">暂无交易记录</td></tr>';
@@ -2761,27 +2786,33 @@ function renderTransactions() {
 }
 
 // 渲染整个卖鸡面板
-function renderNationwidePanel() {
-  const balEl = document.getElementById('nw-balance');
+function renderSellPanel() {
+  const balEl = document.getElementById('sell-balance');
   if (balEl) balEl.textContent = '¥' + state.money.toFixed(2);
-  initNationwideFilters();
   renderMyListings();
+  renderSellActivity();
+  updateSellBuyerCount();
+  renderSellTransactions();
+}
+
+function renderBuyPanel() {
+  initNationwideFilters();
   renderNationwideListings();
   updateNationwideStats();
-  renderTransactions();
-  renderBuyerActivity();
-  updateBuyerOnlineCount();
-  document.getElementById('nationwide-update-time').textContent = state.nationwideLastRefresh ? '更新于: ' + state.nationwideLastRefresh : '';
+  renderBuyActivity();
+  updateBuyOnlineCount();
+  renderBuyTransactions();
+  document.getElementById('buy-update-time').textContent = state.nationwideLastRefresh ? '更新于: ' + state.nationwideLastRefresh : '';
 }
 
 // 初始化筛选下拉
 function initNationwideFilters() {
-  const breedSelect = document.getElementById('nw-filter-breed');
+  const breedSelect = document.getElementById('buy-filter-breed');
   if (breedSelect && breedSelect.options.length <= 1) {
     breedSelect.innerHTML = '<option value="all">全部品种</option>' +
       Object.keys(BREEDS).map(k => `<option value="${k}">${BREEDS[k].name}</option>`).join('');
   }
-  const provSelect = document.getElementById('nw-filter-province');
+  const provSelect = document.getElementById('buy-filter-province');
   if (provSelect && provSelect.options.length <= 1) {
     provSelect.innerHTML = '<option value="all">全国</option>' +
       CHINA_CITIES.map(p => `<option value="${p.province}">${p.province}</option>`).join('');
@@ -2840,7 +2871,19 @@ function simulateBuyerActivity() {
     }
   }
 
-  updateBuyerOnlineCount();
+  // 买侧活动：随机生成购买成交记录
+  if (Math.random() < 0.4 && state.nationwideMarket.length > 0) {
+    const l = state.nationwideMarket[Math.floor(Math.random() * state.nationwideMarket.length)];
+    if (l) {
+      const buyer = SELLERS[Math.floor(Math.random() * SELLERS.length)];
+      const count = Math.floor(1 + Math.random() * 4);
+      const totalPrice = (l.totalPrice * count * (0.85 + Math.random() * 0.3)).toFixed(0);
+      addBuyActivity({ tpl: `${buyer} 以 <strong style="color:var(--accent);">¥${totalPrice}</strong> 购入 ${count}只${l.breedName} (${l.province})`, icon: '🛒' });
+    }
+  }
+
+  updateSellBuyerCount();
+  updateBuyOnlineCount();
 }
 
 function addBuyerActivity(act) {
@@ -2852,11 +2895,11 @@ function addBuyerActivity(act) {
     ts: Date.now(),
   });
   if (state.nationwideBuyerActivity.length > 100) state.nationwideBuyerActivity.length = 100;
-  renderBuyerActivity();
+  renderSellActivity();
 }
 
-function renderBuyerActivity() {
-  const feed = document.getElementById('nw-activity-feed');
+function renderSellActivity() {
+  const feed = document.getElementById('sell-activity-feed');
   if (!feed) return;
   const acts = (state.nationwideBuyerActivity || []).slice(0, 30);
   if (acts.length === 0) {
@@ -2869,11 +2912,64 @@ function renderBuyerActivity() {
   </div>`).join('');
 }
 
-function updateBuyerOnlineCount() {
-  const el = document.getElementById('nw-online-buyers');
+function updateSellBuyerCount() {
+  const el = document.getElementById('sell-online-buyers');
   if (!el) return;
   const count = 3 + Math.floor(Math.random() * 8);
   el.textContent = count;
+}
+
+// ==================== 购买侧渲染 ====================
+function renderBuyTransactions() {
+  const tbody = document.getElementById('buy-transaction-log');
+  if (!tbody) return;
+  if (state.transactions.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text2);">暂无交易记录</td></tr>';
+    return;
+  }
+  tbody.innerHTML = state.transactions.slice(0, 50).map(t => {
+    const typeLabel = t.type === 'income' ? '<span class="badge badge-success">+收入</span>' :
+      t.type === 'expense' ? '<span class="badge badge-danger">-支出</span>' :
+      '<span class="badge badge-info">调整</span>';
+    const amountColor = t.type === 'income' ? 'var(--success)' : t.type === 'expense' ? 'var(--danger)' : 'var(--text2)';
+    return `<tr>
+      <td>${t.time}</td><td>${typeLabel}</td>
+      <td style="color:${amountColor};font-weight:600;">${t.type==='income'?'+':t.type==='expense'?'-':''}${t.amount.toFixed(2)}</td>
+      <td>${t.balance.toFixed(2)}</td><td>${t.desc}</td>
+    </tr>`;
+  }).join('');
+}
+
+function addBuyActivity(act) {
+  state.nationwideBuyActivity = state.nationwideBuyActivity || [];
+  state.nationwideBuyActivity.unshift({
+    time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    icon: act.icon || '🔔',
+    html: act.tpl,
+    ts: Date.now(),
+  });
+  if (state.nationwideBuyActivity.length > 100) state.nationwideBuyActivity.length = 100;
+  renderBuyActivity();
+}
+
+function renderBuyActivity() {
+  const feed = document.getElementById('buy-activity-feed');
+  if (!feed) return;
+  const acts = (state.nationwideBuyActivity || []).slice(0, 30);
+  if (acts.length === 0) {
+    feed.innerHTML = '<div style="color:var(--text2);">🕐 等待买家上线...</div>';
+    return;
+  }
+  feed.innerHTML = acts.map((a, i) => `<div ${i===0?'class="fade-in"':''} style="padding:2px 0;border-bottom:1px solid var(--border);">
+    <span style="color:var(--text2);font-size:.75em;">${a.time}</span>
+    ${a.icon} ${a.html}
+  </div>`).join('');
+}
+
+function updateBuyOnlineCount() {
+  const el = document.getElementById('buy-online');
+  if (!el) return;
+  el.textContent = 5 + Math.floor(Math.random() * 15);
 }
 
 // ==================== 时间辅助 ====================
@@ -3600,7 +3696,8 @@ function refreshAll() {
   updateCameraPanel();
   updateAutoTasks();
   updateFilterDropdowns();
-  renderNationwidePanel();
+  renderSellPanel();
+  renderBuyPanel();
 }
 
 function filterChickens() {
@@ -3879,6 +3976,23 @@ function init() {
     saveAll();
   }
 
+  // 买侧种子活动
+  if (!state.nationwideBuyActivity || state.nationwideBuyActivity.length === 0) {
+    state.nationwideBuyActivity = [];
+    const buySeeds = [
+      { icon:'🛒', tpl:'山东张氏养殖 以 <strong style="color:var(--accent);">¥128</strong> 购入 2只白羽肉鸡(AA+) (河北)' },
+      { icon:'🔥', tpl:'广东温氏禽业 批量扫货 <strong>安徽皖南土鸡</strong> 5只，成交价 ¥450' },
+      { icon:'🛒', tpl:'四川新希望 从 <strong>河南牧原</strong> 购入 3只海兰褐蛋鸡，¥180 成交' },
+    ];
+    buySeeds.forEach((a, i) => {
+      state.nationwideBuyActivity.push({
+        time: new Date(Date.now() - (buySeeds.length - i) * 30000).toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit', second:'2-digit' }),
+        icon: a.icon, html: a.tpl, ts: Date.now() - (buySeeds.length - i) * 30000,
+      });
+    });
+    saveAll();
+  }
+
   // 初次渲染
   refreshAll();
 
@@ -3962,12 +4076,17 @@ function init() {
   // 买家实时模拟 (每15秒)
   let _nwSimCounter = 0;
   setInterval(() => {
-    const nwPanel = document.getElementById('tab-nationwide');
-    if (!nwPanel || !nwPanel.classList.contains('active')) return;
+    const sellPanel = document.getElementById('tab-sell');
+    const buyPanel = document.getElementById('tab-buy');
+    const sellActive = sellPanel && sellPanel.classList.contains('active');
+    const buyActive = buyPanel && buyPanel.classList.contains('active');
+    if (!sellActive && !buyActive) return;
+
     simulateBuyerActivity();
+
     if (++_nwSimCounter % 4 === 0) { // 每60秒刷浏览计数
       state.nationwideMarket.forEach(l => { l.views = (l.views || 0) + Math.floor(Math.random() * 5); });
-      renderNationwideListings();
+      if (buyActive) renderNationwideListings();
     }
     if (_nwSimCounter % 8 === 0) saveAll();
   }, 15000);
@@ -4034,13 +4153,16 @@ window.App = {
   addTempSensor, removeTempSensor, renameTempSensor, refreshAllTempSensors, updateTempChart, saveTempAlertSettings,
   addIpCamera, removeCamera, renameCamera, refreshAllCameras, captureSnapshot, openWebcam, closeWebcam, captureWebcamSnapshot, copyRtspUrl, updateCameraUrl, updateCameraType, updateCameraInterval, updateCameraPanel,
   refreshAll,
-  // 全国卖鸡
+  // 出售
   listChickenForSale, unlistChicken, listReadyForSale, updateListedPrice,
-  buyFromMarketplace, filterNationwide, renderNationwidePanel, refreshNationwideMarket,
+  renderSellPanel, renderSellActivity, updateSellBuyerCount,
+  // 购买
+  buyFromMarketplace, filterNationwide, renderBuyPanel, refreshNationwideMarket,
+  renderBuyActivity, updateBuyOnlineCount,
   // 资金管理
   setFunds, addFundsDirect, addFundsDirectCustom,
   // 买家模拟
-  simulateBuyerActivity, addBuyerActivity,
+  simulateBuyerActivity, addBuyerActivity, addBuyActivity,
 };
 
 // 启动
