@@ -504,6 +504,51 @@ tr:hover { background:rgba(45,106,79,.04); }
     <h3><i class="fas fa-bell"></i>告警记录 <button class="btn btn-sm btn-outline" onclick="App.clearRecords('alerts')" style="margin-left:8px;"><i class="fas fa-eraser"></i>清空告警</button></h3>
     <div id="alert-log" style="max-height:200px;overflow-y:auto;"></div>
   </div>
+  <!-- 手机通知推送 -->
+  <div class="card" style="border-left:3px solid var(--accent);">
+    <h3><i class="fas fa-mobile-alt"></i>手机通知推送
+      <span style="font-size:.75em;color:var(--text2);font-weight:400;margin-left:8px;">温度预警 / 喂食提醒 / 饲料不足 — 实时推送到手机</span>
+    </h3>
+    <div class="grid2" style="margin-top:12px;">
+      <div>
+        <h4 style="margin-bottom:6px;">📱 Bark <span style="font-size:.7em;color:var(--text2);">(iOS · 免费 · App Store)</span></h4>
+        <div style="font-size:.75em;color:var(--text2);margin-bottom:6px;">
+          安装 Bark App → 复制设备 Key 或 URL → 粘贴
+        </div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="notify-bark-key" placeholder="Bark Key 或 https://api.day.app/xxx" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:.85em;background:var(--card);color:var(--text);" onchange="App.saveNotifySettings()">
+          <button class="btn btn-sm btn-primary" onclick="App.testNotify('bark')" style="white-space:nowrap;">📨 测试</button>
+        </div>
+      </div>
+      <div>
+        <h4 style="margin-bottom:6px;">🔗 自定义 Webhook <span style="font-size:.7em;color:var(--text2);">(企业微信/钉钉/飞书)</span></h4>
+        <div style="font-size:.75em;color:var(--text2);margin-bottom:6px;">
+          粘贴机器人 Webhook URL 即可
+        </div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="notify-webhook-url" placeholder="https://hooks.xxx.com/..." style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:.85em;background:var(--card);color:var(--text);" onchange="App.saveNotifySettings()">
+          <button class="btn btn-sm btn-outline" onclick="App.testNotify('webhook')" style="white-space:nowrap;">📨 测试</button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
+        <input type="checkbox" id="notify-browser" onchange="App.saveNotifySettings()" checked style="accent-color:var(--primary);width:16px;height:16px;">
+        <span style="font-size:.82em;">🔔 桌面通知</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
+        <input type="checkbox" id="notify-temp" onchange="App.saveNotifySettings()" checked style="accent-color:var(--primary);width:16px;height:16px;">
+        <span style="font-size:.82em;">🌡️ 温度预警</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;">
+        <input type="checkbox" id="notify-feed" onchange="App.saveNotifySettings()" checked style="accent-color:var(--primary);width:16px;height:16px;">
+        <span style="font-size:.82em;">🍚 喂食提醒</span>
+      </label>
+      <span style="font-size:.72em;color:var(--text2);margin-left:auto;">
+        已推 <strong id="notify-push-count" style="color:var(--primary);">0</strong> 条
+      </span>
+    </div>
+  </div>
   <div class="card">
     <h3><i class="fas fa-database"></i>数据管理</h3>
     <div style="display:flex;flex-wrap:wrap;gap:8px;">
@@ -925,6 +970,15 @@ let state = {
   nationwideBuyerActivity: Storage.get('nationwideBuyerActivity', []),
   nationwideBuyActivity: Storage.get('nationwideBuyActivity', []),
   transactions: Storage.get('transactions', []),  // 交易记录 [{time, type, amount, balance, desc}]
+  notify: Storage.get('notify', {
+    barkKey: '',
+    webhookUrl: '',
+    browserNotify: true,
+    tempAlert: true,
+    feedRemind: true,
+    pushCount: 0,
+    lastPush: {},  // {type: timestamp} 防刷屏
+  }),
 };
 
 // 持久化辅助
@@ -959,6 +1013,7 @@ function saveAll() {
   Storage.set('transactions', state.transactions);
   Storage.set('nationwideBuyerActivity', state.nationwideBuyerActivity);
   Storage.set('nationwideBuyActivity', state.nationwideBuyActivity);
+  Storage.set('notify', state.notify);
 }
 
 // ==================== 鸡只管理 ====================
@@ -1398,6 +1453,106 @@ function simulateSensorForGh(gh) {
 function addAlert(type, message) {
   state.alertLog.unshift({type, message, time: new Date().toLocaleString('zh-CN')});
   if (state.alertLog.length > 200) state.alertLog.length = 200;
+  // 触发手机通知
+  const notifyType = type === 'danger' ? 'danger' : type === 'warn' ? 'warn' : 'info';
+  pushNotify(notifyType, message);
+}
+
+// ==================== 手机通知推送引擎 ====================
+function pushNotify(type, message) {
+  const n = state.notify;
+  // 按内容分类过滤：温度/天气相关 → tempAlert 控制；饲料/喂食/饮水 → feedRemind 控制
+  const isTemp = /温|℃|°/.test(message);
+  const isFeed = /饲料|喂食|喂水|饮水|食|水库存/.test(message);
+  if (isTemp && !n.tempAlert) return;
+  if (isFeed && !n.feedRemind) return;
+  // 非温度非饲料的通用告警始终推送
+
+  // 防刷屏：同一类型 5 分钟内不重复推
+  const now = Date.now();
+  if (n.lastPush[type] && now - n.lastPush[type] < 300000) return;
+  n.lastPush[type] = now;
+  n.pushCount = (n.pushCount || 0) + 1;
+  saveAll();
+  // 更新 UI 计数
+  const countEl = document.getElementById('notify-push-count');
+  if (countEl) countEl.textContent = n.pushCount;
+
+  const title = type === 'danger' ? '🚨 紧急告警' : type === 'warn' ? '⚠️ 提醒通知' : 'ℹ️ 信息通知';
+  const plainMsg = message.replace(/<[^>]+>/g, ''); // 去 HTML 标签
+
+  // 1. 浏览器桌面通知
+  if (n.browserNotify && Notification.permission === 'granted') {
+    try { new Notification(title, { body: plainMsg, icon: '🐔', tag: 'cfp-alert' }); } catch(_) {}
+  }
+
+  // 2. Bark 推送 (iOS)
+  if (n.barkKey) {
+    let url = n.barkKey.includes('://') ? n.barkKey : `https://api.day.app/${n.barkKey}`;
+    if (!url.includes('/push')) url = url.replace(/\/$/, '') + '/push';
+    const barkUrl = `${url}/${encodeURIComponent(title)}/${encodeURIComponent(plainMsg)}?sound=alarm`;
+    try { fetch(barkUrl, { mode: 'no-cors' }).catch(()=>{}); } catch(_) {}
+  }
+
+  // 3. 自定义 Webhook
+  if (n.webhookUrl) {
+    try {
+      fetch(n.webhookUrl, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, message: plainMsg, type, time: new Date().toLocaleString('zh-CN'), app: '智能养鸡平台' }),
+      }).catch(()=>{});
+    } catch(_) {}
+  }
+}
+
+// 保存通知设置 (从UI同步)
+function saveNotifySettings() {
+  try {
+    state.notify.barkKey = document.getElementById('notify-bark-key')?.value?.trim() || '';
+    state.notify.webhookUrl = document.getElementById('notify-webhook-url')?.value?.trim() || '';
+    state.notify.browserNotify = document.getElementById('notify-browser')?.checked ?? true;
+    state.notify.tempAlert = document.getElementById('notify-temp')?.checked ?? true;
+    state.notify.feedRemind = document.getElementById('notify-feed')?.checked ?? true;
+    saveAll();
+  } catch(_) {}
+}
+
+// 加载通知设置到UI
+function loadNotifySettings() {
+  try {
+    const el = id => document.getElementById(id);
+    const n = state.notify;
+    if (el('notify-bark-key')) el('notify-bark-key').value = n.barkKey || '';
+    if (el('notify-webhook-url')) el('notify-webhook-url').value = n.webhookUrl || '';
+    if (el('notify-browser')) el('notify-browser').checked = n.browserNotify !== false;
+    if (el('notify-temp')) el('notify-temp').checked = n.tempAlert !== false;
+    if (el('notify-feed')) el('notify-feed').checked = n.feedRemind !== false;
+    if (el('notify-push-count')) el('notify-push-count').textContent = n.pushCount || 0;
+  } catch(_) {}
+}
+
+// 测试推送
+async function testNotify(channel) {
+  const title = '🐔 测试通知';
+  const msg = '智能养鸡平台通知推送正常！' + new Date().toLocaleTimeString('zh-CN');
+  try {
+    if (channel === 'bark') {
+      const key = document.getElementById('notify-bark-key')?.value?.trim();
+      if (!key) { alert('请先填写 Bark Key 或 URL'); return; }
+      let url = key.includes('://') ? key : `https://api.day.app/${key}`;
+      if (!url.includes('/push')) url = url.replace(/\/$/, '') + '/push';
+      await fetch(`${url}/${encodeURIComponent(title)}/${encodeURIComponent(msg)}?sound=alarm`);
+      alert('✅ Bark 测试推送已发送！请查看手机通知栏。');
+    } else if (channel === 'webhook') {
+      const url = document.getElementById('notify-webhook-url')?.value?.trim();
+      if (!url) { alert('请先填写 Webhook URL'); return; }
+      await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({title,message:msg}) });
+      alert('✅ Webhook 测试已发送！');
+    }
+  } catch(e) {
+    alert('❌ 推送失败: ' + e.message);
+  }
 }
 
 // ==================== 核心逻辑 ====================
@@ -1926,8 +2081,13 @@ function updateAllGreenhouseSensors() {
     tempEl.textContent = latest.temp.toFixed(1) + '°C';
     humEl.textContent = latest.humidity.toFixed(0) + '%';
     let alerts = '';
-    if (latest.temp > gh.tempMax) alerts += '<div class="alert alert-danger">🔴 温度过高 ' + latest.temp.toFixed(1) + '°C (阈值: ≤' + gh.tempMax + '°C) — 建议：开启湿帘/风机降温，喷雾降温，增加饮水。</div>';
-    else if (latest.temp < gh.tempMin) alerts += '<div class="alert alert-danger">🔵 温度过低 ' + latest.temp.toFixed(1) + '°C (阈值: ≥' + gh.tempMin + '°C) — 建议：开启供暖，减少通风，检查保温。</div>';
+    if (latest.temp > gh.tempMax) {
+      alerts += '<div class="alert alert-danger">🔴 温度过高 ' + latest.temp.toFixed(1) + '°C (阈值: ≤' + gh.tempMax + '°C) — 建议：开启湿帘/风机降温，喷雾降温，增加饮水。</div>';
+      pushNotify('danger', `🔴 ${gh.name} 温度过高 ${latest.temp.toFixed(1)}°C (阈值≤${gh.tempMax}°C) — 请开启降温设备`);
+    } else if (latest.temp < gh.tempMin) {
+      alerts += '<div class="alert alert-danger">🔵 温度过低 ' + latest.temp.toFixed(1) + '°C (阈值: ≥' + gh.tempMin + '°C) — 建议：开启供暖，减少通风，检查保温。</div>';
+      pushNotify('danger', `🔵 ${gh.name} 温度过低 ${latest.temp.toFixed(1)}°C (阈值≥${gh.tempMin}°C) — 请开启供暖设备`);
+    }
     if (latest.humidity > gh.humMax) alerts += '<div class="alert alert-warn">🟡 湿度过高 ' + latest.humidity.toFixed(0) + '% (阈值: ≤' + gh.humMax + '%) — 建议：加强通风，检查饮水器是否漏水。</div>';
     else if (latest.humidity < gh.humMin) alerts += '<div class="alert alert-warn">🟠 湿度过低 ' + latest.humidity.toFixed(0) + '% (阈值: ≥' + gh.humMin + '%) — 建议：喷雾增湿。</div>';
     if (!alerts) alerts = '<div class="alert alert-success">✅ 温湿度正常</div>';
@@ -2168,8 +2328,13 @@ function renderTempSensors() {
     const al = state.tempAlertSettings.low;
     let alerts = '';
     if (latest) {
-      if (latest.temp >= ah) alerts += '<div class="alert alert-danger" style="font-size:.78em;">🔴 高温预警: '+latest.temp.toFixed(1)+'°C (阈值≥'+ah+'°C)</div>';
-      else if (latest.temp <= al) alerts += '<div class="alert alert-danger" style="font-size:.78em;">🔵 低温预警: '+latest.temp.toFixed(1)+'°C (阈值≤'+al+'°C)</div>';
+      if (latest.temp >= ah) {
+        alerts += '<div class="alert alert-danger" style="font-size:.78em;">🔴 高温预警: '+latest.temp.toFixed(1)+'°C (阈值≥'+ah+'°C)</div>';
+        pushNotify('danger', `🔴 ${ts.name} 高温预警: ${latest.temp.toFixed(1)}°C (阈值≥${ah}°C)`);
+      } else if (latest.temp <= al) {
+        alerts += '<div class="alert alert-danger" style="font-size:.78em;">🔵 低温预警: '+latest.temp.toFixed(1)+'°C (阈值≤'+al+'°C)</div>';
+        pushNotify('danger', `🔵 ${ts.name} 低温预警: ${latest.temp.toFixed(1)}°C (阈值≤${al}°C)`);
+      }
       if (ts.history.length >= 2) {
         const prev = ts.history[ts.history.length-2];
         const hourDiff = (latest.time - prev.time) / 3600000;
@@ -3777,6 +3942,7 @@ function refreshAll() {
   updateCameraPanel();
   updateAutoTasks();
   updateFilterDropdowns();
+  loadNotifySettings();
   renderSellPanel();
   renderBuyPanel();
 }
@@ -4205,10 +4371,17 @@ function init() {
   // 启动桌宠
   initDeskPet();
 
+  // 请求浏览器通知权限
+  if (state.notify.browserNotify && 'Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().then(perm => {
+      console.log('🔔 浏览器通知权限:', perm);
+    });
+  }
+
   console.log('🐔 全自动化养鸡监测平台 v2.0 已启动');
   console.log('📋 功能清单: 鸡群管理 | 行情交易 | 统计报表 | 天气预报 | 大棚监测 | 自动化');
   console.log('💾 所有数据存储在浏览器 localStorage (cfp_* 键)');
-  console.log('🔌 API接口预留: 和风天气(devapi.qweather.com) | 聚合数据(juhe.cn) | 自定义行情API');
+  console.log('📱 手机通知: Bark/' + (state.notify.barkKey ? '已配置' : '未配置') + ' Webhook/' + (state.notify.webhookUrl ? '已配置' : '未配置'));
   } catch(e) {
     console.error('init() error:', e.message, e.stack);
     alert('启动失败: ' + e.message);
@@ -4419,6 +4592,8 @@ window.App = {
   setFunds, addFundsDirect, addFundsDirectCustom,
   // 买家模拟
   simulateBuyerActivity, addBuyerActivity, addBuyActivity,
+  // 手机通知
+  saveNotifySettings, loadNotifySettings, testNotify, pushNotify,
 };
 
 // 启动
