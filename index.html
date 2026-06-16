@@ -157,6 +157,7 @@ tr:hover { background:rgba(45,106,79,.04); }
   <button class="tab-btn" data-tab="tab-monitor"><i class="fas fa-satellite-dish"></i>监控通道</button>
 	  <button class="tab-btn" data-tab="tab-camera"><i class="fas fa-video"></i>视频监控</button>
 	  <button class="tab-btn" data-tab="tab-auto"><i class="fas fa-cogs"></i>自动化</button>
+	  <button class="tab-btn" data-tab="tab-nationwide"><i class="fas fa-globe"></i>全国卖鸡</button>
 </nav>
 
 <!-- ===== TAB 1: 鸡群管理 ===== -->
@@ -204,6 +205,7 @@ tr:hover { background:rgba(45,106,79,.04); }
       <select id="filter-status" onchange="App.filterChickens()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);">
         <option value="all">全部状态</option>
         <option value="alive">存活</option>
+        <option value="listed">挂牌中</option>
         <option value="sold">已售</option>
         <option value="dead">已死亡</option>
         <option value="sell-ready">待出栏</option>
@@ -433,7 +435,68 @@ tr:hover { background:rgba(45,106,79,.04); }
   </div>
 </div>
 
-<!-- ===== MODALS ===== -->
+<!-- ===== TAB 9: 全国卖鸡 ===== -->
+<div class="tab-panel" id="tab-nationwide">
+  <!-- 资金管理 -->
+  <div class="card" style="background:linear-gradient(135deg, rgba(74,124,89,.08), rgba(212,168,83,.08));">
+    <h3><i class="fas fa-wallet"></i>资金管理</h3>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:160px;">
+        <div style="font-size:2em;font-weight:700;color:var(--primary);" id="nw-balance">¥0.00</div>
+        <div style="font-size:.8em;color:var(--text2);">当前余额</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="App.setFunds()"><i class="fas fa-edit"></i>设置金额</button>
+        <button class="btn btn-success" onclick="App.addFundsDirect()"><i class="fas fa-plus"></i>补充 10000</button>
+        <button class="btn btn-warn" onclick="App.addFundsDirectCustom()"><i class="fas fa-coins"></i>自定义补充</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 我的挂牌 -->
+  <div class="card">
+    <h3><i class="fas fa-tag"></i>我的挂牌 <button class="btn btn-sm btn-primary" onclick="App.listReadyForSale()" style="margin-left:12px;"><i class="fas fa-bullhorn"></i>一键挂牌达标鸡</button></h3>
+    <div class="table-wrap"><table><thead><tr>
+      <th>编号</th><th>品种</th><th>日龄</th><th>体重(kg)</th><th>挂牌价(元)</th><th>发布时间</th><th>操作</th>
+    </tr></thead><tbody id="my-listings-body"><tr><td colspan="7" style="text-align:center;color:var(--text2);">暂无挂牌</td></tr></tbody></table></div>
+  </div>
+
+  <!-- 全国鸡源 -->
+  <div class="card">
+    <h3><i class="fas fa-globe-asia"></i>全国鸡源市场
+      <button class="btn btn-sm btn-primary" id="btn-refresh-nationwide" onclick="App.refreshNationwideMarket()" style="margin-left:12px;"><i class="fas fa-sync-alt"></i>刷新市场</button>
+      <span style="font-size:.75em;color:var(--text2);margin-left:8px;" id="nationwide-update-time"></span>
+    </h3>
+    <div class="form-row" style="margin-bottom:12px;">
+      <div class="form-group"><label>品种</label><select id="nw-filter-breed" onchange="App.filterNationwide()"><option value="all">全部品种</option></select></div>
+      <div class="form-group"><label>省份</label><select id="nw-filter-province" onchange="App.filterNationwide()"><option value="all">全国</option></select></div>
+      <div class="form-group"><label>价格区间</label><select id="nw-filter-price" onchange="App.filterNationwide()"><option value="all">不限</option><option value="0-50">50元以下</option><option value="50-100">50-100元</option><option value="100-200">100-200元</option><option value="200-500">200-500元</option><option value="500">500元以上</option></select></div>
+      <div class="form-group"><label>排序</label><select id="nw-filter-sort" onchange="App.filterNationwide()"><option value="price-asc">价格低→高</option><option value="price-desc">价格高→低</option><option value="age-asc">日龄小→大</option></select></div>
+    </div>
+    <div class="grid3" id="nationwide-listings-grid"></div>
+  </div>
+
+  <!-- 市场统计 -->
+  <div class="grid2">
+    <div class="card">
+      <h3><i class="fas fa-chart-bar"></i>各省鸡源分布</h3>
+      <canvas id="chart-nationwide-province" height="240"></canvas>
+    </div>
+    <div class="card">
+      <h3><i class="fas fa-info-circle"></i>市场概览</h3>
+      <div class="quick-stats" id="nationwide-stats"></div>
+    </div>
+  </div>
+
+  <!-- 交易记录 -->
+  <div class="card">
+    <h3><i class="fas fa-history"></i>交易记录 <button class="btn btn-sm btn-outline" onclick="App.clearRecords('transactions')" style="margin-left:8px;"><i class="fas fa-eraser"></i>清空</button></h3>
+    <div class="table-wrap" style="max-height:240px;overflow-y:auto;">
+      <table><thead><tr><th>时间</th><th>类型</th><th>金额(元)</th><th>余额(元)</th><th>说明</th></tr></thead>
+      <tbody id="transaction-log-body"><tr><td colspan="5" style="text-align:center;color:var(--text2);">暂无交易记录</td></tr></tbody></table>
+    </div>
+  </div>
+</div>
 <!-- 添加新鸡 -->
 <div class="modal-overlay" id="modal-add-chicken">
   <div class="modal"><h3><i class="fas fa-plus-circle"></i>引入新鸡</h3>
@@ -743,6 +806,9 @@ let state = {
   tempAlertSettings: Storage.get('tempAlertSettings', {high:38, low:2, change:8}),
   cameras: Storage.get('cameras', []),
   snapshots: Storage.get('snapshots', []),
+  nationwideMarket: Storage.get('nationwideMarket', []),
+  nationwideLastRefresh: Storage.get('nationwideLastRefresh', ''),
+  transactions: Storage.get('transactions', []),  // 交易记录 [{time, type, amount, balance, desc}]
 };
 
 // 持久化辅助
@@ -772,6 +838,9 @@ function saveAll() {
   Storage.set('cameras', state.cameras);
   Storage.set('snapshots', state.snapshots);
   Storage.set('selectedIds', state.selectedIds);
+  Storage.set('nationwideMarket', state.nationwideMarket);
+  Storage.set('nationwideLastRefresh', state.nationwideLastRefresh);
+  Storage.set('transactions', state.transactions);
 }
 
 // ==================== 鸡只管理 ====================
@@ -1382,6 +1451,7 @@ function updateChickenTable(filterBreed='all', filterStatus='all', filterSearch=
 
   if (filterBreed !== 'all') list = list.filter(c=>c.breed===filterBreed);
   if (filterStatus === 'alive') list = list.filter(c=>c.status==='alive');
+  else if (filterStatus === 'listed') list = list.filter(c=>c.status==='listed');
   else if (filterStatus === 'sold') list = list.filter(c=>c.status==='sold');
   else if (filterStatus === 'dead') list = list.filter(c=>c.status==='dead');
   else if (filterStatus === 'sell-ready') list = list.filter(c=>c.status==='alive' && isSellReady(c));
@@ -1407,6 +1477,7 @@ function updateChickenTable(filterBreed='all', filterStatus='all', filterSearch=
     const vaccDue = c.vaccines ? c.vaccines.filter(v=>v.nextDate && new Date(v.nextDate) <= new Date()).length : 0;
     const sellDate = breed ? new Date(new Date(c.introDate).getTime() + (breed.maturityDays - c.introAge)*86400000).toLocaleDateString('zh-CN') : '-';
     const statusLabel = c.status==='alive' ? (sellReady?'<span class="badge badge-warn pulse">可出栏</span>':'<span class="badge badge-success">存活</span>') :
+      c.status==='listed' ? '<span class="badge badge-info">挂牌中</span>' :
       c.status==='sold' ? '<span class="badge badge-info">已售</span>' : '<span class="badge badge-danger">死亡</span>';
     const rowClass = sellReady && c.status==='alive' ? 'sell-ready' : '';
     const checked = state.selectedIds.includes(c.id) ? 'checked' : '';
@@ -2306,6 +2377,410 @@ function updateCameraPanel() {
   renderSnapshotGallery();
 }
 
+// ==================== 全国卖鸡平台 ====================
+
+// 全国卖家名称库
+const SELLERS = [
+  '山东张氏养殖场','河南牧原禽业','河北大午养鸡场','辽宁禾丰牧业','江苏立华牧业',
+  '广东温氏禽业','四川新希望养殖','广西金陵农牧','安徽华卫禽业','湖北神丹养殖',
+  '江西正邦禽业','湖南湘佳牧业','福建圣农发展','浙江明康汇','吉林德大养殖',
+  '黑龙江北大荒牧业','山西大象农牧','陕西华秦牧业','甘肃中天羊业(禽)','云南神农养殖',
+  '贵州金鸡养殖','内蒙古塞飞亚','新疆泰昆牧业','宁夏晓鸣农牧','青海高原养鸡',
+  '海南文昌鸡业','重庆华裕禽业','天津大成牧业','北京华都峪口','上海申凤禽业',
+];
+
+// 生成全国鸡源数据（覆盖所有省份）
+function generateNationwideMarket() {
+  const listings = [];
+  const breeds = Object.keys(BREEDS);
+  const provinces = CHINA_CITIES.map(p => p.province);
+  const now = Date.now();
+  const idPrefix = 'MK';
+
+  // 每省生成 2-4 条鸡源，山东/河南/河北/广东/四川 多加
+  provinces.forEach(prov => {
+    const citiesInProv = CHINA_CITIES.find(p => p.province === prov)?.cities || [];
+    const city = citiesInProv.length > 0 ? citiesInProv[Math.floor(Math.random() * citiesInProv.length)] : prov;
+
+    // 畜牧大省多生成
+    const isMajor = ['山东','河南','河北','辽宁','广东','四川','江苏','广西','安徽','湖北'].includes(prov);
+    const count = isMajor ? 3 + Math.floor(Math.random() * 4) : 1 + Math.floor(Math.random() * 3);
+
+    for (let i = 0; i < count; i++) {
+      const breedKey = breeds[Math.floor(Math.random() * breeds.length)];
+      const breed = BREEDS[breedKey];
+      const bp = MARKET_BASE_PRICE[breedKey];
+      const basePrice = bp?.毛鸡 || 10;
+
+      // 日龄：肉鸡取 20天→出栏日龄，蛋鸡取 100→400天
+      let ageDays;
+      if (breed.type === 'meat') {
+        ageDays = Math.floor(breed.maturityDays * (0.3 + Math.random() * 0.65));
+      } else {
+        ageDays = Math.floor(100 + Math.random() * 300);
+      }
+
+      // 体重：基于日龄估算
+      const chickW = 0.04;
+      const adultW = breed.adultWeight;
+      const maturity = breed.maturityDays;
+      const k = breed.type === 'meat' ? 0.08 : 0.015;
+      const midPoint = maturity * 0.45;
+      const rawWeight = chickW + (adultW - chickW) / (1 + Math.exp(-k * (ageDays - midPoint)));
+      const weight = Math.round(rawWeight * 1000) / 1000;
+
+      // 价格：基准价的 75%-120% 随机波动
+      const priceFluctuation = 0.75 + Math.random() * 0.45;
+      const totalPrice = Math.round(basePrice * weight * priceFluctuation * 100) / 100;
+
+      // 发布时间：过去 0-72 小时内随机
+      const listedTime = now - Math.floor(Math.random() * 72 * 3600000);
+
+      const sellerIdx = Math.floor(Math.random() * SELLERS.length);
+      const seller = SELLERS[sellerIdx];
+
+      listings.push({
+        id: idPrefix + String(listings.length + 1).padStart(4, '0'),
+        breed: breedKey,
+        breedName: breed.name,
+        type: breed.type,
+        category: breed.category,
+        ageDays,
+        weight,
+        totalPrice,
+        province: prov,
+        city,
+        seller,
+        contact: '138' + String(Math.floor(Math.random() * 90000000 + 10000000)),
+        listedTime,
+        listedDate: new Date(listedTime).toLocaleString('zh-CN'),
+        source: 'nationwide',
+      });
+    }
+  });
+
+  // 打乱顺序
+  for (let i = listings.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [listings[i], listings[j]] = [listings[j], listings[i]];
+  }
+
+  return listings;
+}
+
+// 挂牌我的鸡
+function listChickenForSale(id, price) {
+  const chicken = getChickenById(id);
+  if (!chicken || chicken.status !== 'alive') { alert('该鸡只不可挂牌。'); return; }
+  if (!price || price <= 0) { alert('请输入有效的挂牌价格。'); return; }
+  chicken.status = 'listed';
+  chicken.listedPrice = price;
+  chicken.listedTime = Date.now();
+  addAlert('info', `📢 ${id} 已挂牌出售，价格 ${price.toFixed(2)} 元。`);
+  saveAll();
+  refreshAll();
+}
+
+// 下架
+function unlistChicken(id) {
+  const chicken = getChickenById(id);
+  if (!chicken || chicken.status !== 'listed') { alert('未找到该挂牌鸡只。'); return; }
+  chicken.status = 'alive';
+  chicken.listedPrice = null;
+  chicken.listedTime = null;
+  addAlert('info', `🔙 ${id} 已下架，恢复为存活状态。`);
+  saveAll();
+  refreshAll();
+}
+
+// 一键挂牌达标鸡
+function listReadyForSale() {
+  const ready = state.chickens.filter(c => c.status === 'alive' && isSellReady(c));
+  if (ready.length === 0) { alert('当前没有达到出栏/淘汰标准的鸡只。'); return; }
+  const defaultPrice = parseFloat(prompt(
+    `共有 ${ready.length} 只达标鸡可挂牌。\n请设置每只的挂牌价格（元）：`,
+    '50'
+  ));
+  if (!defaultPrice || defaultPrice <= 0) return;
+  let count = 0;
+  ready.forEach(c => {
+    c.status = 'listed';
+    c.listedPrice = defaultPrice;
+    c.listedTime = Date.now();
+    count++;
+  });
+  addAlert('success', `📢 已挂牌 ${count} 只达标鸡，单价 ${defaultPrice.toFixed(2)} 元。`);
+  saveAll();
+  refreshAll();
+}
+
+// 修改挂牌价
+function updateListedPrice(id) {
+  const chicken = getChickenById(id);
+  if (!chicken || chicken.status !== 'listed') return;
+  const newPrice = parseFloat(prompt(`修改 ${id} 的挂牌价格（元）：`, chicken.listedPrice || 50));
+  if (!newPrice || newPrice <= 0) return;
+  chicken.listedPrice = newPrice;
+  addAlert('info', `💰 ${id} 挂牌价已更新为 ${newPrice.toFixed(2)} 元。`);
+  saveAll();
+  renderMyListings();
+}
+
+// 从全国市场买入
+function buyFromMarketplace(listingId) {
+  const listing = state.nationwideMarket.find(l => l.id === listingId);
+  if (!listing) { alert('该鸡源已下架。'); return; }
+  if (state.money < listing.totalPrice) {
+    alert(`资金不足！需要 ${listing.totalPrice.toFixed(2)} 元，当前余额 ${state.money.toFixed(2)} 元。`);
+    return;
+  }
+  if (!confirm(`确定要购买「${listing.breedName}」吗？\n\n品种：${listing.breedName}\n日龄：${listing.ageDays}天\n体重：${listing.weight.toFixed(3)}kg\n价格：¥${listing.totalPrice.toFixed(2)}\n所在地：${listing.province} ${listing.city}\n卖家：${listing.seller}`)) return;
+
+  // 扣钱 + 添加鸡只
+  state.money = Math.round((state.money - listing.totalPrice) * 100) / 100;
+  addTransaction('expense', listing.totalPrice, `从「${listing.seller}」购入 ${listing.breedName}`);
+  const newId = generateId();
+  const breedData = getBreed(listing.breed);
+  const introAge = Math.max(1, listing.ageDays - 3); // 假设运输 3 天
+  state.chickens.push({
+    id: newId, breed: listing.breed,
+    introDate: new Date().toISOString().slice(0, 10),
+    introAge, initialWeight: listing.weight, weight: listing.weight,
+    status: 'alive',
+    note: `从「${listing.seller}」购入 (${listing.province}${listing.city})`,
+    vaccines: [],
+    eggRecords: [],
+    weightRecords: [{ date: new Date().toISOString().slice(0, 10), weight: listing.weight }],
+  });
+
+  // 从市场移除该条
+  state.nationwideMarket = state.nationwideMarket.filter(l => l.id !== listingId);
+  addAlert('success', `✅ 成功购买「${listing.breedName}」(${listing.province})，花费 ${listing.totalPrice.toFixed(2)} 元，已加入鸡群 (${newId})。`);
+  saveAll();
+  renderNationwidePanel();
+  refreshAll();
+}
+
+// 市场筛选
+function filterNationwide() {
+  renderNationwideListings();
+}
+
+// 渲染全国鸡源卡片
+function renderNationwideListings() {
+  const container = document.getElementById('nationwide-listings-grid');
+  if (!container) return;
+
+  const filterBreed = document.getElementById('nw-filter-breed')?.value || 'all';
+  const filterProvince = document.getElementById('nw-filter-province')?.value || 'all';
+  const filterPrice = document.getElementById('nw-filter-price')?.value || 'all';
+  const filterSort = document.getElementById('nw-filter-sort')?.value || 'price-asc';
+
+  let list = [...state.nationwideMarket];
+
+  if (filterBreed !== 'all') list = list.filter(l => l.breed === filterBreed);
+  if (filterProvince !== 'all') list = list.filter(l => l.province === filterProvince);
+  if (filterPrice === '0-50') list = list.filter(l => l.totalPrice < 50);
+  else if (filterPrice === '50-100') list = list.filter(l => l.totalPrice >= 50 && l.totalPrice < 100);
+  else if (filterPrice === '100-200') list = list.filter(l => l.totalPrice >= 100 && l.totalPrice < 200);
+  else if (filterPrice === '200-500') list = list.filter(l => l.totalPrice >= 200 && l.totalPrice < 500);
+  else if (filterPrice === '500') list = list.filter(l => l.totalPrice >= 500);
+
+  if (filterSort === 'price-asc') list.sort((a, b) => a.totalPrice - b.totalPrice);
+  else if (filterSort === 'price-desc') list.sort((a, b) => b.totalPrice - a.totalPrice);
+  else if (filterSort === 'age-asc') list.sort((a, b) => a.ageDays - b.ageDays);
+
+  if (list.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text2);padding:24px;grid-column:1/-1;">📭 暂无匹配的鸡源，试试扩大筛选范围</div>';
+    return;
+  }
+
+  container.innerHTML = list.map(l => {
+    const breed = BREEDS[l.breed];
+    const typeLabel = breed?.type === 'layer' ? '蛋鸡' : '肉鸡';
+    const typeColor = breed?.type === 'layer' ? 'var(--primary)' : 'var(--accent)';
+    const timeAgo = getTimeAgo(l.listedTime);
+    return `<div class="card" style="position:relative;">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+        <div>
+          <strong style="font-size:1.05em;">${l.breedName}</strong>
+          <span class="badge" style="margin-left:6px;background:${typeColor};color:#fff;font-size:.7em;">${typeLabel}</span>
+        </div>
+        <span style="font-size:.72em;color:var(--text2);">${timeAgo}</span>
+      </div>
+      <div class="quick-stats" style="margin-bottom:8px;">
+        <div class="quick-stat">
+          <div class="num" style="font-size:1.1em;">${l.ageDays}天</div>
+          <div class="label">日龄</div>
+        </div>
+        <div class="quick-stat">
+          <div class="num" style="font-size:1.1em;">${l.weight.toFixed(2)}kg</div>
+          <div class="label">体重</div>
+        </div>
+        <div class="quick-stat">
+          <div class="num" style="font-size:1.1em;color:var(--accent);">¥${l.totalPrice.toFixed(0)}</div>
+          <div class="label">总价</div>
+        </div>
+      </div>
+      <div style="font-size:.8em;color:var(--text2);margin-bottom:8px;">
+        <div>📍 ${l.province} ${l.city}</div>
+        <div>🏠 ${l.seller}</div>
+      </div>
+      <button class="btn btn-primary" onclick="App.buyFromMarketplace('${l.id}')" style="width:100%;">
+        <i class="fas fa-shopping-cart"></i>购买
+      </button>
+    </div>`;
+  }).join('');
+}
+
+// 渲染我的挂牌
+function renderMyListings() {
+  const tbody = document.getElementById('my-listings-body');
+  if (!tbody) return;
+  const listed = state.chickens.filter(c => c.status === 'listed');
+  if (listed.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);">暂无挂牌</td></tr>';
+    return;
+  }
+  tbody.innerHTML = listed.map(c => {
+    const breed = getBreed(c.breed);
+    const age = getAgeDays(c);
+    const weight = estimateWeight(c);
+    const timeStr = c.listedTime ? new Date(c.listedTime).toLocaleString('zh-CN') : '-';
+    return `<tr>
+      <td><strong>${c.id}</strong></td>
+      <td>${breed?.name || c.breed}</td>
+      <td>${age}天</td>
+      <td>${weight.toFixed(3)}</td>
+      <td><strong style="color:var(--accent);">¥${(c.listedPrice || 0).toFixed(2)}</strong></td>
+      <td>${timeStr}</td>
+      <td>
+        <button class="btn btn-sm btn-outline" onclick="App.updateListedPrice('${c.id}')"><i class="fas fa-edit"></i>改价</button>
+        <button class="btn btn-sm btn-warn" onclick="App.unlistChicken('${c.id}')"><i class="fas fa-undo"></i>下架</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// 更新市场统计
+function updateNationwideStats() {
+  const statsEl = document.getElementById('nationwide-stats');
+  if (!statsEl) return;
+  const list = state.nationwideMarket;
+  if (list.length === 0) {
+    statsEl.innerHTML = '<p style="color:var(--text2);">暂未生成市场数据，点击"刷新市场"</p>';
+    return;
+  }
+  const avgPrice = list.reduce((s, l) => s + l.totalPrice, 0) / list.length;
+  const breedCount = {};
+  list.forEach(l => { breedCount[l.breedName] = (breedCount[l.breedName] || 0) + 1; });
+  const hotBreed = Object.entries(breedCount).sort((a, b) => b[1] - a[1])[0];
+  const provCount = {};
+  list.forEach(l => { provCount[l.province] = (provCount[l.province] || 0) + 1; });
+  const topProv = Object.entries(provCount).sort((a, b) => b[1] - a[1])[0];
+
+  statsEl.innerHTML = `
+    <div class="quick-stat"><div class="num">${list.length}</div><div class="label">全国挂牌总数</div></div>
+    <div class="quick-stat"><div class="num" style="color:var(--accent);">¥${avgPrice.toFixed(0)}</div><div class="label">平均价格</div></div>
+    <div class="quick-stat"><div class="num">${hotBreed?.[0] || '-'}</div><div class="label">最多品种</div></div>
+    <div class="quick-stat"><div class="num">${topProv?.[0] || '-'}</div><div class="label">最多省份</div></div>
+  `;
+
+  // 省份分布图
+  const ctx = document.getElementById('chart-nationwide-province');
+  if (!ctx) return;
+  const sortedProvs = Object.entries(provCount).sort((a, b) => b[1] - a[1]).slice(0, 15);
+  if (window._nwProvChart) window._nwProvChart.destroy();
+  window._nwProvChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sortedProvs.map(e => e[0]),
+      datasets: [{
+        label: '鸡源数量',
+        data: sortedProvs.map(e => e[1]),
+        backgroundColor: '#4A7C59',
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: { x: { title: { display: true, text: '只' } } }
+    }
+  });
+}
+
+// 刷新全国市场
+function refreshNationwideMarket() {
+  state.nationwideMarket = generateNationwideMarket();
+  state.nationwideLastRefresh = new Date().toLocaleString('zh-CN');
+  document.getElementById('nationwide-update-time').textContent = '更新于: ' + state.nationwideLastRefresh;
+  addAlert('info', `🛒 全国鸡源已刷新，共 ${state.nationwideMarket.length} 条挂牌。`);
+  saveAll();
+  renderNationwidePanel();
+}
+
+// 渲染交易记录
+function renderTransactions() {
+  const tbody = document.getElementById('transaction-log-body');
+  if (!tbody) return;
+  if (state.transactions.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text2);">暂无交易记录</td></tr>';
+    return;
+  }
+  tbody.innerHTML = state.transactions.slice(0, 50).map(t => {
+    const typeLabel = t.type === 'income' ? '<span class="badge badge-success">+收入</span>' :
+      t.type === 'expense' ? '<span class="badge badge-danger">-支出</span>' :
+      '<span class="badge badge-info">调整</span>';
+    const amountColor = t.type === 'income' ? 'var(--success)' : t.type === 'expense' ? 'var(--danger)' : 'var(--text2)';
+    return `<tr>
+      <td>${t.time}</td>
+      <td>${typeLabel}</td>
+      <td style="color:${amountColor};font-weight:600;">${t.type==='income'?'+':t.type==='expense'?'-':''}${t.amount.toFixed(2)}</td>
+      <td>${t.balance.toFixed(2)}</td>
+      <td>${t.desc}</td>
+    </tr>`;
+  }).join('');
+}
+
+// 渲染整个卖鸡面板
+function renderNationwidePanel() {
+  const balEl = document.getElementById('nw-balance');
+  if (balEl) balEl.textContent = '¥' + state.money.toFixed(2);
+  initNationwideFilters();
+  renderMyListings();
+  renderNationwideListings();
+  updateNationwideStats();
+  renderTransactions();
+  document.getElementById('nationwide-update-time').textContent = state.nationwideLastRefresh ? '更新于: ' + state.nationwideLastRefresh : '';
+}
+
+// 初始化筛选下拉
+function initNationwideFilters() {
+  const breedSelect = document.getElementById('nw-filter-breed');
+  if (breedSelect && breedSelect.options.length <= 1) {
+    breedSelect.innerHTML = '<option value="all">全部品种</option>' +
+      Object.keys(BREEDS).map(k => `<option value="${k}">${BREEDS[k].name}</option>`).join('');
+  }
+  const provSelect = document.getElementById('nw-filter-province');
+  if (provSelect && provSelect.options.length <= 1) {
+    provSelect.innerHTML = '<option value="all">全国</option>' +
+      CHINA_CITIES.map(p => `<option value="${p.province}">${p.province}</option>`).join('');
+  }
+}
+
+// 时间友好显示
+function getTimeAgo(timestamp) {
+  const diff = Date.now() - timestamp;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return '刚刚';
+  if (mins < 60) return mins + '分钟前';
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return hours + '小时前';
+  const days = Math.floor(hours / 24);
+  return days + '天前';
+}
 
 function updateAutoTasks() {
   const tbody = document.getElementById('auto-tasks-body');
@@ -2446,6 +2921,7 @@ function addChicken() {
     });
   }
   state.money = Math.round((state.money - totalCost) * 100) / 100;
+  addTransaction('expense', totalCost, `引入 ${count} 只${breedData?.name||breed}`);
   addAlert('success', `✅ 成功引入 ${count} 只${breedData?.name||breed}，花费 ${totalCost.toFixed(2)} 元。`);
   hideModal('modal-add-chicken');
   saveAll();
@@ -2475,6 +2951,7 @@ function batchBuyChicks() {
     });
   }
   state.money = Math.round((state.money - totalCost) * 100) / 100;
+  addTransaction('expense', totalCost, `批量购入 ${count} 只${breedData?.name||breed}鸡苗`);
   addAlert('success', `✅ 批量购入 ${count} 只${breedData?.name||breed}鸡苗，花费 ${totalCost.toFixed(2)} 元。`);
   hideModal('modal-batch-buy');
   saveAll();
@@ -2501,6 +2978,7 @@ function sellReadyChickens() {
     c.sellRevenue = revenue;
   });
   state.money = Math.round((state.money + totalRevenue) * 100) / 100;
+  addTransaction('income', totalRevenue, `卖出 ${ready.length} 只达标鸡`);
   addAlert('success', `💰 成功卖出 ${ready.length} 只鸡，收益 ${totalRevenue.toFixed(2)} 元。`);
   saveAll();
   refreshAll();
@@ -2516,6 +2994,7 @@ function toggleSelectAll() {
   let list = [...state.chickens];
   if (filterBreed !== 'all') list = list.filter(c=>c.breed===filterBreed);
   if (filterStatus === 'alive') list = list.filter(c=>c.status==='alive');
+  else if (filterStatus === 'listed') list = list.filter(c=>c.status==='listed');
   else if (filterStatus === 'sold') list = list.filter(c=>c.status==='sold');
   else if (filterStatus === 'dead') list = list.filter(c=>c.status==='dead');
   else if (filterStatus === 'sell-ready') list = list.filter(c=>c.status==='alive' && isSellReady(c));
@@ -2601,6 +3080,7 @@ function batchSellSelected() {
   });
   state.money = Math.round((state.money + totalRevenue) * 100) / 100;
   state.selectedIds = state.selectedIds.filter(id=>!targets.some(t=>t.id===id));
+  addTransaction('income', totalRevenue, `批量卖出 ${targets.length} 只鸡`);
   addAlert('success', `💰 批量卖出 ${targets.length} 只鸡，收益 ${totalRevenue.toFixed(2)} 元。`);
   saveAll();
   refreshAll();
@@ -2734,7 +3214,7 @@ function showChickenDetail(id) {
   document.getElementById('detail-breed').textContent = breed?.name||chicken.breed;
   document.getElementById('detail-age').textContent = age;
   document.getElementById('detail-weight').textContent = weight.toFixed(3);
-  document.getElementById('detail-status').textContent = chicken.status==='alive'?'存活':chicken.status==='sold'?'已售':'死亡';
+  document.getElementById('detail-status').textContent = chicken.status==='alive'?'存活':chicken.status==='listed'?'挂牌中':chicken.status==='sold'?'已售':'死亡';
   document.getElementById('detail-intro-date').textContent = chicken.introDate;
   document.getElementById('detail-sell-date').textContent = breed ? new Date(new Date(chicken.introDate).getTime()+(breed.maturityDays-chicken.introAge)*86400000).toLocaleDateString('zh-CN') : '-';
   document.getElementById('detail-total-eggs').textContent = eggTotal;
@@ -2801,11 +3281,65 @@ function addWater() {
   refreshAll();
 }
 
+// ==================== 资金管理 ====================
+function addTransaction(type, amount, desc) {
+  state.transactions.unshift({
+    time: new Date().toLocaleString('zh-CN'),
+    type, // 'income', 'expense', 'adjust'
+    amount: Math.abs(amount),
+    balance: state.money,
+    desc,
+  });
+  if (state.transactions.length > 200) state.transactions.length = 200;
+}
+
 function addFunds() {
-  const amount = parseFloat(prompt('请输入要补充的资金金额（元）：', '10000'));
+  const action = confirm('点击「确定」= 直接设置金额\n点击「取消」= 补充金额（加法）');
+  const amount = parseFloat(prompt(
+    action ? '请输入新的资金总额（元）：' : '请输入要补充的资金金额（元）：',
+    action ? String(state.money.toFixed(0)) : '10000'
+  ));
+  if (!amount || amount <= 0) return;
+  if (action) {
+    const oldMoney = state.money;
+    state.money = Math.round(amount * 100) / 100;
+    addTransaction('adjust', Math.abs(state.money - oldMoney),
+      `手动设置资金: ${oldMoney.toFixed(2)} → ${state.money.toFixed(2)} 元`);
+    addAlert('success', `💰 资金已设置为 ${state.money.toFixed(2)} 元。`);
+  } else {
+    state.money = Math.round((state.money + amount) * 100) / 100;
+    addTransaction('income', amount, `手动补充资金 +${amount.toFixed(2)} 元`);
+    addAlert('success', `💰 成功补充资金 ${amount.toFixed(2)} 元，当前余额 ${state.money.toFixed(2)} 元。`);
+  }
+  saveAll();
+  refreshAll();
+}
+
+// 快捷资金操作
+function setFunds() {
+  const amount = parseFloat(prompt('设置资金总额（元）：', state.money.toFixed(0)));
+  if (!amount || amount <= 0) return;
+  const oldMoney = state.money;
+  state.money = Math.round(amount * 100) / 100;
+  addTransaction('adjust', Math.abs(state.money - oldMoney),
+    `手动设置资金: ${oldMoney.toFixed(2)} → ${state.money.toFixed(2)} 元`);
+  addAlert('success', `💰 资金已设置为 ${state.money.toFixed(2)} 元。`);
+  saveAll();
+  refreshAll();
+}
+function addFundsDirect() {
+  state.money = Math.round((state.money + 10000) * 100) / 100;
+  addTransaction('income', 10000, '快捷补充资金 +10000 元');
+  addAlert('success', `💰 补充 10000 元，余额 ${state.money.toFixed(2)} 元。`);
+  saveAll();
+  refreshAll();
+}
+function addFundsDirectCustom() {
+  const amount = parseFloat(prompt('补充金额（元）：', '5000'));
   if (!amount || amount <= 0) return;
   state.money = Math.round((state.money + amount) * 100) / 100;
-  addAlert('success', `💰 成功补充资金 ${amount.toFixed(2)} 元，当前余额 ${state.money.toFixed(2)} 元。`);
+  addTransaction('income', amount, `自定义补充资金 +${amount.toFixed(2)} 元`);
+  addAlert('success', `💰 补充 ${amount.toFixed(2)} 元，余额 ${state.money.toFixed(2)} 元。`);
   saveAll();
   refreshAll();
 }
@@ -2829,6 +3363,7 @@ function sellEggs() {
   state.eggStock -= count;
   state.money = Math.round((state.money + totalPrice) * 100) / 100;
   state.eggSales.push({date: new Date().toISOString().slice(0,10), count, unitPrice: pricePerKg, total: totalPrice});
+  addTransaction('income', totalPrice, `出售 ${count} 枚鸡蛋`);
   addAlert('success', `🥚 出售 ${count} 枚鸡蛋 (${totalKg.toFixed(1)}kg)，收入 ${totalPrice.toFixed(2)} 元。`);
   hideModal('modal-sell-eggs');
   saveAll();
@@ -2959,6 +3494,7 @@ function refreshAll() {
   updateCameraPanel();
   updateAutoTasks();
   updateFilterDropdowns();
+  renderNationwidePanel();
 }
 
 function filterChickens() {
@@ -3043,6 +3579,11 @@ function clearRecords(type) {
       state.connLog = [];
       renderConnLog();
       addAlert('info', '🗑️ 连接日志已清空');
+      break;
+    case 'transactions':
+      state.transactions = [];
+      renderTransactions();
+      addAlert('info', '🗑️ 交易记录已清空');
       break;
     case 'all':
       state.alertLog = [];
@@ -3201,6 +3742,13 @@ function init() {
   // 切换开关初始状态
   document.getElementById('toggle-auto-feed').checked = state.settings.autoFeed;
 
+  // 初始化全国市场数据（首次生成）
+  if (state.nationwideMarket.length === 0) {
+    state.nationwideMarket = generateNationwideMarket();
+    state.nationwideLastRefresh = new Date().toLocaleString('zh-CN');
+    saveAll();
+  }
+
   // 初次渲染
   refreshAll();
 
@@ -3343,6 +3891,11 @@ window.App = {
   addTempSensor, removeTempSensor, renameTempSensor, refreshAllTempSensors, updateTempChart, saveTempAlertSettings,
   addIpCamera, removeCamera, renameCamera, refreshAllCameras, captureSnapshot, openWebcam, closeWebcam, captureWebcamSnapshot, copyRtspUrl, updateCameraUrl, updateCameraType, updateCameraInterval, updateCameraPanel,
   refreshAll,
+  // 全国卖鸡
+  listChickenForSale, unlistChicken, listReadyForSale, updateListedPrice,
+  buyFromMarketplace, filterNationwide, renderNationwidePanel, refreshNationwideMarket,
+  // 资金管理
+  setFunds, addFundsDirect, addFundsDirectCustom,
 };
 
 // 启动
