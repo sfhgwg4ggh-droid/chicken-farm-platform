@@ -133,50 +133,50 @@ tr:hover { background:rgba(45,106,79,.04); }
 .quick-stat .label { font-size:.78em; color:var(--text2); }
 
 /* ========== 桌宠小鸡 ========== */
-.desk-pet { position:fixed; bottom:20px; right:20px; width:140px; height:180px; cursor:grab; z-index:99999; transition:filter .3s; }
+.desk-pet { position:fixed; bottom:20px; right:20px; width:160px; height:200px; cursor:grab; z-index:99999; transition:filter .3s; }
 .desk-pet:active { cursor:grabbing; }
 .desk-pet.dragging { filter:drop-shadow(0 4px 16px rgba(0,0,0,.18)); }
 
-.dp-chicken { position:relative; width:120px; height:140px; margin:0 auto; animation:dp-idle 2.4s ease-in-out infinite; }
-.dp-body { position:absolute; bottom:14px; left:50%; transform:translateX(-50%); width:88px; height:78px;
+.dp-chicken { position:relative; width:140px; height:160px; margin:0 auto; animation:dp-idle 2.4s ease-in-out infinite; }
+.dp-body { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); width:100px; height:88px;
   background:linear-gradient(175deg,#FDE68A 0%,#F9E076 40%,#E8C84A 100%); border-radius:50% 50% 45% 45%;
   box-shadow:inset 0 -6px 12px rgba(180,140,30,.15),inset 0 3px 6px rgba(255,255,255,.3),0 2px 6px rgba(0,0,0,.06); z-index:2; }
-.dp-body::after { content:''; position:absolute; bottom:6px; left:18px; width:50px; height:36px;
+.dp-body::after { content:''; position:absolute; bottom:6px; left:22px; width:56px; height:40px;
   background:radial-gradient(ellipse,rgba(255,252,235,.65) 0%,transparent 70%); border-radius:50%; }
 
-.dp-head { position:absolute; top:0; left:50%; transform:translateX(-50%); width:62px; height:58px;
+.dp-head { position:absolute; top:0; left:50%; transform:translateX(-50%); width:72px; height:66px;
   background:linear-gradient(175deg,#FDE68A 0%,#F9E076 55%,#E8C84A 100%); border-radius:50%; z-index:5;
   box-shadow:inset 0 3px 5px rgba(255,255,255,.28); animation:dp-tilt 5s ease-in-out infinite; }
 .dp-comb { position:absolute; top:-12px; left:50%; transform:translateX(-50%); z-index:6; }
 .dp-comb span { position:absolute; background:#E85D3A; border-radius:50% 50% 30% 30%; box-shadow:inset 0 -2px 3px rgba(0,0,0,.1); }
-.dp-comb span:nth-child(1) { width:16px; height:20px; left:-2px; top:-3px; }
-.dp-comb span:nth-child(2) { width:14px; height:23px; left:10px; top:-9px; }
-.dp-comb span:nth-child(3) { width:12px; height:16px; left:22px; top:-1px; }
-.dp-wattle { position:absolute; bottom:-16px; left:50%; transform:translateX(-50%);
-  width:12px; height:15px; background:#E85D3A; border-radius:50%; z-index:7; opacity:.8; }
-.dp-eye { position:absolute; top:16px; width:14px; height:16px; background:#FFFEF8; border-radius:50%;
+.dp-comb span:nth-child(1) { width:18px; height:22px; left:-2px; top:-4px; }
+.dp-comb span:nth-child(2) { width:16px; height:26px; left:12px; top:-10px; }
+.dp-comb span:nth-child(3) { width:14px; height:18px; left:26px; top:-2px; }
+.dp-wattle { position:absolute; bottom:-18px; left:50%; transform:translateX(-50%);
+  width:14px; height:18px; background:#E85D3A; border-radius:50%; z-index:7; opacity:.8; }
+.dp-eye { position:absolute; top:18px; width:16px; height:18px; background:#FFFEF8; border-radius:50%;
   box-shadow:inset 0 0 2px rgba(0,0,0,.06); z-index:7; }
-.dp-eye.l { left:4px; } .dp-eye.r { right:4px; }
-.dp-pupil { position:absolute; width:7px; height:8px; background:#1a1a1a; border-radius:50%; top:5px; left:4px; }
+.dp-eye.l { left:6px; } .dp-eye.r { right:6px; }
+.dp-pupil { position:absolute; width:8px; height:9px; background:#1a1a1a; border-radius:50%; top:5px; left:5px; }
 .dp-pupil::after { content:''; position:absolute; width:3px; height:3px; background:#fff; border-radius:50%; top:1px; left:1px; }
-.dp-beak { position:absolute; top:28px; left:50%; transform:translateX(-50%); width:0; height:0;
-  border-left:7px solid transparent; border-right:7px solid transparent; border-top:9px solid #F0A030; z-index:8; }
-.dp-blush { position:absolute; top:25px; width:10px; height:6px; background:rgba(255,150,130,.4); border-radius:50%; z-index:6; filter:blur(1.5px); }
-.dp-blush.l { left:16px; } .dp-blush.r { right:16px; }
-.dp-wing { position:absolute; bottom:42px; width:28px; height:38px;
+.dp-beak { position:absolute; top:32px; left:50%; transform:translateX(-50%); width:0; height:0;
+  border-left:8px solid transparent; border-right:8px solid transparent; border-top:10px solid #F0A030; z-index:8; }
+.dp-blush { position:absolute; top:28px; width:12px; height:7px; background:rgba(255,150,130,.4); border-radius:50%; z-index:6; filter:blur(1.5px); }
+.dp-blush.l { left:18px; } .dp-blush.r { right:18px; }
+.dp-wing { position:absolute; bottom:48px; width:32px; height:44px;
   background:linear-gradient(180deg,#FDE68A 0%,#E8C84A 100%); border-radius:60% 40% 50% 50%; z-index:4;
   box-shadow:0 1px 3px rgba(0,0,0,.05); transform-origin:top center; animation:dp-flutter 3s ease-in-out infinite; }
-.dp-wing.l { left:22px; animation-delay:0s; } .dp-wing.r { right:22px; animation-delay:1.5s; }
-.dp-feet { position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:48px; z-index:3; }
-.dp-foot { position:absolute; bottom:0; width:3px; height:12px; background:#E8923A; border-radius:2px; }
-.dp-foot.l { left:8px; } .dp-foot.m { left:22px; } .dp-foot.r { left:36px; }
+.dp-wing.l { left:26px; animation-delay:0s; } .dp-wing.r { right:26px; animation-delay:1.5s; }
+.dp-feet { position:absolute; bottom:6px; left:50%; transform:translateX(-50%); width:56px; z-index:3; }
+.dp-foot { position:absolute; bottom:0; width:4px; height:14px; background:#E8923A; border-radius:2px; }
+.dp-foot.l { left:10px; } .dp-foot.m { left:26px; } .dp-foot.r { left:42px; }
 
-@keyframes dp-idle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-@keyframes dp-tilt { 0%,45%,55%,100%{transform:translateX(-50%) rotate(0)} 48%{transform:translateX(-50%) rotate(-4deg)} 52%{transform:translateX(-50%) rotate(4deg)} }
-@keyframes dp-flutter { 0%,90%,100%{transform:rotate(0)} 93%{transform:rotate(-15deg)} 96%{transform:rotate(7deg)} }
+@keyframes dp-idle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+@keyframes dp-tilt { 0%,45%,55%,100%{transform:translateX(-50%) rotate(0)} 48%{transform:translateX(-50%) rotate(-5deg)} 52%{transform:translateX(-50%) rotate(5deg)} }
+@keyframes dp-flutter { 0%,90%,100%{transform:rotate(0)} 93%{transform:rotate(-18deg)} 96%{transform:rotate(8deg)} }
 
 /* 桌宠气泡 */
-.dp-bubble { position:absolute; bottom:155px; left:50%; transform:translateX(-50%);
+.dp-bubble { position:absolute; bottom:175px; left:50%; transform:translateX(-50%);
   background:#fffef8; border-radius:12px; padding:10px 14px; box-shadow:0 2px 12px rgba(0,0,0,.1);
   font-size:.78em; color:var(--text); white-space:nowrap; max-width:220px; opacity:0; pointer-events:none;
   transition:opacity .3s; border:1px solid rgba(180,150,80,.2); }
@@ -186,7 +186,7 @@ tr:hover { background:rgba(45,106,79,.04); }
 .dp-bubble .dp-icon { font-size:1.5em; display:block; margin-bottom:2px; }
 .dp-bubble .dp-time { font-size:.7em; color:var(--text2); margin-top:3px; display:block; }
 
-@media (max-width:600px) { .desk-pet { transform:scale(.75); bottom:4px; right:4px; } }
+@media (max-width:600px) { .desk-pet { transform:scale(.7); bottom:2px; right:2px; } }
 </style>
 </head>
 <body>
@@ -4203,15 +4203,15 @@ function initDeskPet() {
     const saved = JSON.parse(localStorage.getItem('cfp_pet_pos'));
     if (saved) { pet.x = saved.x; pet.y = saved.y; }
   } catch (_) {}
-  if (isNaN(pet.x)) { pet.x = window.innerWidth - 160; pet.y = window.innerHeight - 220; }
+  if (isNaN(pet.x)) { pet.x = window.innerWidth - 180; pet.y = window.innerHeight - 240; }
 
   function savePos() {
     try { localStorage.setItem('cfp_pet_pos', JSON.stringify({x:pet.x, y:pet.y})); } catch (_) {}
   }
 
   function clampPos() {
-    pet.x = Math.max(0, Math.min(pet.x, window.innerWidth - 140));
-    pet.y = Math.max(0, Math.min(pet.y, window.innerHeight - 180));
+    pet.x = Math.max(0, Math.min(pet.x, window.innerWidth - 160));
+    pet.y = Math.max(0, Math.min(pet.y, window.innerHeight - 200));
     petEl.style.left = pet.x + 'px';
     petEl.style.top = pet.y + 'px';
     petEl.style.right = 'auto';
